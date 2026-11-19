@@ -1,9 +1,13 @@
 import type { ResolvedServer } from './types.js';
 import { HttpClient } from './http.js';
+import { AuditLogger, type AuditEntry } from './audit.js';
+import { evaluateWriteGate } from './writeGate.js';
 
 export interface PeerServiceOptions {
   servers: ResolvedServer[];
   http: HttpClient;
+  writeEnabled?: boolean;
+  audit?: AuditLogger;
 }
 
 export interface SessionListOptions {
@@ -31,8 +35,20 @@ export interface SessionDiffOptions {
   context?: number;
 }
 
+export interface WriteOptions {
+  allow?: boolean;
+}
+
 export class PeerService {
-  constructor(private readonly options: PeerServiceOptions) {}
+  private readonly writeEnabled: boolean;
+  private readonly audit: AuditLogger;
+
+  constructor(private readonly options: PeerServiceOptions) {
+    this.writeEnabled =
+      options.writeEnabled ??
+      process.env.OPENCODE_PEER_MCP_WRITE_ENABLED === 'true';
+    this.audit = options.audit ?? new AuditLogger();
+  }
 
   listServers(): Array<{
     id: string;
@@ -191,5 +207,183 @@ export class PeerService {
       a: { server: serverA, session: a },
       b: { server: serverB, session: b },
     };
+  }
+
+  async createSession(
+    serverId: string,
+    params: Record<string, unknown>,
+    options: WriteOptions = {},
+  ): Promise<unknown> {
+    const server = this.resolveServer(serverId);
+    const allowlisted =
+      server.allowlist.includes('*') ||
+      server.allowlist.includes('create') ||
+      Boolean(options.allow);
+    const gate = evaluateWriteGate({
+      globalEnabled: this.writeEnabled,
+      allowlisted,
+      explicitAllow: Boolean(options.allow),
+    });
+    let result = 'denied';
+    let sessionId = '__create__';
+    let response: unknown;
+    if (gate.allowed) {
+      try {
+        response = await this.options.http.request(server, '/api/session', {
+          method: 'POST',
+          body: params,
+        });
+        const data = (response as { data?: { id?: string } })?.data;
+        result = 'success';
+        sessionId = data?.id ?? sessionId;
+      } catch (error) {
+        result = `error: ${error instanceof Error ? error.message : String(error)}`;
+        await this.auditRecord(
+          serverId,
+          sessionId,
+          'session_create',
+          gate.decision,
+          result,
+        );
+        throw error;
+      }
+    }
+    await this.auditRecord(
+      serverId,
+      sessionId,
+      'session_create',
+      gate.decision,
+      result,
+    );
+    if (!gate.allowed) throw new Error(`Write denied: ${gate.decision}`);
+    return response;
+  }
+
+  async promptSession(
+    serverId: string,
+    sessionId: string,
+    prompt: string,
+    options: WriteOptions = {},
+  ): Promise<unknown> {
+    const server = this.resolveServer(serverId);
+    const allowlisted =
+      server.allowlist.includes('*') ||
+      server.allowlist.includes(sessionId) ||
+      Boolean(options.allow);
+    const gate = evaluateWriteGate({
+      globalEnabled: this.writeEnabled,
+      allowlisted,
+      explicitAllow: Boolean(options.allow),
+    });
+    let result = 'denied';
+    if (gate.allowed) {
+      try {
+        const response = await this.options.http.request(
+          server,
+          `/api/session/${encodeURIComponent(sessionId)}/prompt`,
+          { method: 'POST', body: { text: prompt } },
+        );
+        result = 'success';
+        await this.auditRecord(
+          serverId,
+          sessionId,
+          'session_prompt',
+          gate.decision,
+          result,
+        );
+        return response;
+      } catch (error) {
+        result = `error: ${error instanceof Error ? error.message : String(error)}`;
+        await this.auditRecord(
+          serverId,
+          sessionId,
+          'session_prompt',
+          gate.decision,
+          result,
+        );
+        throw error;
+      }
+    }
+    await this.auditRecord(
+      serverId,
+      sessionId,
+      'session_prompt',
+      gate.decision,
+      result,
+    );
+    throw new Error(`Write denied: ${gate.decision}`);
+  }
+
+  async interruptSession(
+    serverId: string,
+    sessionId: string,
+    options: WriteOptions = {},
+  ): Promise<unknown> {
+    const server = this.resolveServer(serverId);
+    const allowlisted =
+      server.allowlist.includes('*') ||
+      server.allowlist.includes(sessionId) ||
+      Boolean(options.allow);
+    const gate = evaluateWriteGate({
+      globalEnabled: this.writeEnabled,
+      allowlisted,
+      explicitAllow: Boolean(options.allow),
+    });
+    let result = 'denied';
+    if (gate.allowed) {
+      try {
+        const response = await this.options.http.request(
+          server,
+          `/api/session/${encodeURIComponent(sessionId)}/interrupt`,
+          { method: 'POST' },
+        );
+        result = 'success';
+        await this.auditRecord(
+          serverId,
+          sessionId,
+          'session_interrupt',
+          gate.decision,
+          result,
+        );
+        return response;
+      } catch (error) {
+        result = `error: ${error instanceof Error ? error.message : String(error)}`;
+        await this.auditRecord(
+          serverId,
+          sessionId,
+          'session_interrupt',
+          gate.decision,
+          result,
+        );
+        throw error;
+      }
+    }
+    await this.auditRecord(
+      serverId,
+      sessionId,
+      'session_interrupt',
+      gate.decision,
+      result,
+    );
+    throw new Error(`Write denied: ${gate.decision}`);
+  }
+
+  private async auditRecord(
+    server: string,
+    session: string,
+    tool: string,
+    allowlistDecision: string,
+    result: string,
+  ): Promise<void> {
+    const entry: AuditEntry = {
+      timestamp: new Date().toISOString(),
+      server,
+      session,
+      tool,
+      confirm: null,
+      allowlistDecision,
+      result,
+    };
+    await this.audit.record(entry);
   }
 }
