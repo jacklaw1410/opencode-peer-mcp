@@ -31,7 +31,10 @@ export class PeerService {
     return server;
   }
 
-  async listSessions(serverId: string, params: { limit?: number; directory?: string } = {}): Promise<unknown> {
+  async listSessions(
+    serverId: string,
+    params: { limit?: number; directory?: string } = {},
+  ): Promise<unknown> {
     const server = this.getServer(serverId);
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 100);
     return this.options.http.request(server, "/api/session", {
@@ -41,6 +44,9 @@ export class PeerService {
 
   async getSession(serverId: string, sessionId: string): Promise<unknown> {
     const server = this.getServer(serverId);
-    return this.options.http.request(server, `/api/session/${encodeURIComponent(sessionId)}`);
+    return this.options.http.request(
+      server,
+      `/api/session/${encodeURIComponent(sessionId)}`,
+    );
   }
 }

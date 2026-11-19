@@ -23,9 +23,16 @@ export interface HttpRequestOptions {
 export class HttpClient {
   constructor(private readonly fetchImpl: typeof fetch = fetch) {}
 
-  async request<T>(server: ResolvedServer, path: string, options: HttpRequestOptions = {}): Promise<T> {
+  async request<T>(
+    server: ResolvedServer,
+    path: string,
+    options: HttpRequestOptions = {},
+  ): Promise<T> {
     const method = options.method ?? "GET";
-    const url = new URL(path.replace(/^\/+/, ""), server.url.endsWith("/") ? server.url : `${server.url}/`);
+    const url = new URL(
+      path.replace(/^\/+/, ""),
+      server.url.endsWith("/") ? server.url : `${server.url}/`,
+    );
     for (const [key, value] of Object.entries(options.query ?? {})) {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
@@ -36,7 +43,8 @@ export class HttpClient {
     } else if (server.auth === "bearer" && server.token) {
       headers.authorization = `Bearer ${server.token}`;
     }
-    if (options.body !== undefined) headers["content-type"] = "application/json";
+    if (options.body !== undefined)
+      headers["content-type"] = "application/json";
 
     const timeoutMs = options.timeoutMs ?? server.timeoutMs;
     const retries = method === "GET" ? 2 : 0;
@@ -49,26 +57,43 @@ export class HttpClient {
         const response = await this.fetchImpl(url, {
           method,
           headers,
-          body: options.body === undefined ? undefined : JSON.stringify(options.body),
+          body:
+            options.body === undefined
+              ? undefined
+              : JSON.stringify(options.body),
           signal: controller.signal,
         });
         clearTimeout(timer);
 
         const contentLength = response.headers.get("content-length");
         if (contentLength && Number(contentLength) > MAX_RESPONSE_BYTES) {
-          throw new HttpError(413, `Response exceeds ${MAX_RESPONSE_BYTES} bytes`);
+          throw new HttpError(
+            413,
+            `Response exceeds ${MAX_RESPONSE_BYTES} bytes`,
+          );
         }
         const text = await response.text();
         if (text.length > MAX_RESPONSE_BYTES) {
-          throw new HttpError(413, `Response exceeds ${MAX_RESPONSE_BYTES} bytes`);
+          throw new HttpError(
+            413,
+            `Response exceeds ${MAX_RESPONSE_BYTES} bytes`,
+          );
         }
 
         if (!response.ok) {
           if (attempt < retries && response.status >= 500) {
-            lastError = new HttpError(response.status, `HTTP ${response.status}: ${text}`, text);
+            lastError = new HttpError(
+              response.status,
+              `HTTP ${response.status}: ${text}`,
+              text,
+            );
             continue;
           }
-          throw new HttpError(response.status, `HTTP ${response.status}: ${text}`, text);
+          throw new HttpError(
+            response.status,
+            `HTTP ${response.status}: ${text}`,
+            text,
+          );
         }
 
         if (response.status === 204 || text === "") return undefined as T;

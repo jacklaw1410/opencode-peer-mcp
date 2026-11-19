@@ -19,10 +19,15 @@ const ConfigSchema = z.object({
 });
 
 export function defaultConfigPath(): string {
-  return process.env.OPENCODE_PEER_MCP_CONFIG ?? `${process.env.HOME ?? ""}/.config/opencode-peer-mcp/servers.yaml`;
+  return (
+    process.env.OPENCODE_PEER_MCP_CONFIG ??
+    `${process.env.HOME ?? ""}/.config/opencode-peer-mcp/servers.yaml`
+  );
 }
 
-export async function loadConfig(path = defaultConfigPath()): Promise<ResolvedServer[]> {
+export async function loadConfig(
+  path = defaultConfigPath(),
+): Promise<ResolvedServer[]> {
   let raw: string;
   try {
     raw = await readFile(path, "utf8");
@@ -42,5 +47,7 @@ export async function loadConfig(path = defaultConfigPath()): Promise<ResolvedSe
     }
     ids.add(server.id);
   }
-  return config.servers.map((server) => toResolvedServer(server as ServerConfig));
+  return config.servers.map((server) =>
+    toResolvedServer(server as ServerConfig),
+  );
 }

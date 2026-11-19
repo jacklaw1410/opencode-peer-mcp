@@ -5,9 +5,14 @@ import type { PeerService } from "./service.js";
 export function createMcpServer(service: PeerService): McpServer {
   const server = new McpServer({ name: "opencode-peer-mcp", version: "0.1.0" });
 
-  server.tool("servers_list", "List configured OpenCode servers.", {}, async () => {
-    return jsonResult(service.listServers());
-  });
+  server.tool(
+    "servers_list",
+    "List configured OpenCode servers.",
+    {},
+    async () => {
+      return jsonResult(service.listServers());
+    },
+  );
 
   server.tool(
     "sessions_list",
@@ -19,7 +24,9 @@ export function createMcpServer(service: PeerService): McpServer {
     },
     async ({ server, limit, directory }) => {
       try {
-        return jsonResult(await service.listSessions(server, { limit, directory }));
+        return jsonResult(
+          await service.listSessions(server, { limit, directory }),
+        );
       } catch (error) {
         return errorResult(error);
       }

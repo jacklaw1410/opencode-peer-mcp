@@ -14,18 +14,31 @@ const server: ResolvedServer = {
 
 describe("HttpClient", () => {
   it("sends basic auth and parses JSON", async () => {
-    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } }));
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
     const client = new HttpClient(fetchImpl as typeof fetch);
     const result = await client.request(server, "/api/session");
     expect(result).toEqual({ ok: true });
-    expect(fetchImpl).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({
-      headers: expect.objectContaining({ authorization: expect.stringMatching(/^Basic /) }),
-    }));
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: expect.stringMatching(/^Basic /),
+        }),
+      }),
+    );
   });
 
   it("throws HttpError on non-ok responses", async () => {
     const fetchImpl = vi.fn(async () => new Response("nope", { status: 404 }));
     const client = new HttpClient(fetchImpl as typeof fetch);
-    await expect(client.request(server, "/api/session/missing")).rejects.toBeInstanceOf(HttpError);
+    await expect(
+      client.request(server, "/api/session/missing"),
+    ).rejects.toBeInstanceOf(HttpError);
   });
 });

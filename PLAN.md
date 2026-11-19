@@ -120,23 +120,23 @@ Later: Option A
 
 ## Architectural comparison
 
-| Dimension | `Traves-Theberge/opencode-mcp` | `dmdboi/opencode-mcp` | `opencode-peer-mcp` |
-|---|---|---|---|
-| Primary purpose | Delegate coding tasks | Spawn/manage sessions | Bridge sessions across configured servers |
-| Server model | Single server | Single server | Multi-server config |
-| Language/runtime | TypeScript/Node | TypeScript/Node | TypeScript/Node |
-| Transport | stdio + HTTP | stdio | stdio first; HTTP optional |
-| Server discovery | Implicit single server | Implicit single server | Config-only; `servers_list` parrots config |
-| Auth | No Basic auth; local auto-start | Bearer only | Basic auth fixed user `opencode`; internal auth modes |
-| Tool coverage | 21 broad tools | 9 session/task tools | Focused peer/session read tools first; gated writes later |
-| Session identity | Implicit single server | Implicit single server | `server_id/session_id` |
-| Read depth | Session list only | Messages + status + context estimate | Messages + status + diff + search + compare |
-| Cross-server operations | None | None | List configured servers, search across servers, compare sessions |
-| Native session comms | No | No | No; external bridge only |
-| Write model | Full write/config | run/fire/reply/check | MVP Option B + audit logs; later Option A `confirm` |
-| Config management | Mutates OpenCode config | None | Peer registry only; no OpenCode config mutation initially |
-| File/workspace tools | Yes | No | No; delegates to OpenCode |
-| Testing/conformance | Docs/tests present | Strong API/conformance tests | Planned unit + integration + OpenAPI conformance + multi-server smoke |
+| Dimension               | `Traves-Theberge/opencode-mcp`  | `dmdboi/opencode-mcp`                | `opencode-peer-mcp`                                                   |
+| ----------------------- | ------------------------------- | ------------------------------------ | --------------------------------------------------------------------- |
+| Primary purpose         | Delegate coding tasks           | Spawn/manage sessions                | Bridge sessions across configured servers                             |
+| Server model            | Single server                   | Single server                        | Multi-server config                                                   |
+| Language/runtime        | TypeScript/Node                 | TypeScript/Node                      | TypeScript/Node                                                       |
+| Transport               | stdio + HTTP                    | stdio                                | stdio first; HTTP optional                                            |
+| Server discovery        | Implicit single server          | Implicit single server               | Config-only; `servers_list` parrots config                            |
+| Auth                    | No Basic auth; local auto-start | Bearer only                          | Basic auth fixed user `opencode`; internal auth modes                 |
+| Tool coverage           | 21 broad tools                  | 9 session/task tools                 | Focused peer/session read tools first; gated writes later             |
+| Session identity        | Implicit single server          | Implicit single server               | `server_id/session_id`                                                |
+| Read depth              | Session list only               | Messages + status + context estimate | Messages + status + diff + search + compare                           |
+| Cross-server operations | None                            | None                                 | List configured servers, search across servers, compare sessions      |
+| Native session comms    | No                              | No                                   | No; external bridge only                                              |
+| Write model             | Full write/config               | run/fire/reply/check                 | MVP Option B + audit logs; later Option A `confirm`                   |
+| Config management       | Mutates OpenCode config         | None                                 | Peer registry only; no OpenCode config mutation initially             |
+| File/workspace tools    | Yes                             | No                                   | No; delegates to OpenCode                                             |
+| Testing/conformance     | Docs/tests present              | Strong API/conformance tests         | Planned unit + integration + OpenAPI conformance + multi-server smoke |
 
 ## Milestones
 
@@ -147,4 +147,4 @@ Later: Option A
 5. Add Option B gated writes + audit logs.
 6. Add Option A per-call `confirm`.
 7. Add optional advanced bridging features.
-" path="/home/jack/opencode-peer-mcp/PLAN.md
+   " path="/home/jack/opencode-peer-mcp/PLAN.md
