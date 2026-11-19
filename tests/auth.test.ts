@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { OPENCODE_USERNAME, resolveAuth, toResolvedServer } from '../src/auth.js';
+import {
+  OPENCODE_USERNAME,
+  resolveAuth,
+  toResolvedServer,
+} from '../src/auth.js';
 import type { ServerConfig } from '../src/types.js';
 
 afterEach(() => {
