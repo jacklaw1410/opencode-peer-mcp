@@ -51,3 +51,69 @@ describe('PeerService', () => {
     expect(http.request).toHaveBeenCalledWith(servers[0], '/api/session/a%2Fb');
   });
 });
+
+describe('PeerService Phase 1 tools', () => {
+  it('derives session status from timing', async () => {
+    const http = {
+      request: vi.fn(async () => ({ data: { time: { busy: 10, idle: 5 } } })),
+    };
+    const service = new PeerService({ servers, http: http as never });
+    await expect(
+      service.getSessionStatus('local', 'session-1'),
+    ).resolves.toMatchObject({ status: 'busy' });
+  });
+
+  it('passes message filters', async () => {
+    const http = { request: vi.fn(async () => ({ data: [] })) };
+    const service = new PeerService({ servers, http: http as never });
+    await service.getSessionMessages('local', 'session-1', {
+      limit: 10,
+      order: 'desc',
+      type: 'user',
+    });
+    expect(http.request).toHaveBeenCalledWith(
+      servers[0],
+      '/api/session/session-1/message',
+      {
+        query: { limit: 10, order: 'desc', type: 'user' },
+      },
+    );
+  });
+
+  it('passes diff options', async () => {
+    const http = { request: vi.fn(async () => ({ data: [] })) };
+    const service = new PeerService({ servers, http: http as never });
+    await service.getSessionDiff('local', 'session-1', {
+      from: 'm1',
+      to: 'm2',
+      context: 3,
+    });
+    expect(http.request).toHaveBeenCalledWith(
+      servers[0],
+      '/api/session/session-1/diff',
+      {
+        query: { from: 'm1', to: 'm2', context: 3 },
+      },
+    );
+  });
+
+  it('searches selected servers', async () => {
+    const http = { request: vi.fn(async () => ({ data: [{ id: 's1' }] })) };
+    const service = new PeerService({ servers, http: http as never });
+    const result = await service.searchSessions(['local'], 'foo', 5);
+    expect(result).toEqual([{ server: 'local', session: { id: 's1' } }]);
+  });
+
+  it('compares two sessions', async () => {
+    const http = { request: vi.fn(async () => ({ data: { id: 's1' } })) };
+    const service = new PeerService({ servers, http: http as never });
+    const result = (await service.compareSessions(
+      'local',
+      'a',
+      'local',
+      'b',
+    )) as { a: unknown; b: unknown };
+    expect(result.a).toMatchObject({ server: 'local' });
+    expect(result.b).toMatchObject({ server: 'local' });
+  });
+});

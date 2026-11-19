@@ -42,6 +42,11 @@ describe('createMcpServer', () => {
       'server_get',
       'sessions_list',
       'session_get',
+      'session_status',
+      'session_messages',
+      'session_diff',
+      'sessions_search',
+      'sessions_compare',
     ]);
 
     const result = await client.callTool({
