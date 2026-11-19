@@ -50,9 +50,7 @@ describe('PeerService', () => {
     await service.getSession('local', 'a/b');
     expect(http.request).toHaveBeenCalledWith(servers[0], '/api/session/a%2Fb');
   });
-});
 
-describe('PeerService Phase 1 tools', () => {
   it('derives session status from timing', async () => {
     const http = {
       request: vi.fn(async () => ({ data: { time: { busy: 10, idle: 5 } } })),
