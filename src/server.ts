@@ -92,6 +92,116 @@ export function createMcpServer(service: PeerService): McpServer {
     },
   );
 
+  server.tool(
+    'session_status',
+    'Get derived status for a session.',
+    {
+      server: z.string().min(1),
+      session_id: z.string().min(1),
+    },
+    async ({ server, session_id }) => {
+      try {
+        return jsonResult(await service.getSessionStatus(server, session_id));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'session_messages',
+    'Get messages for a session.',
+    {
+      server: z.string().min(1),
+      session_id: z.string().min(1),
+      limit: z.number().int().positive().max(200).optional(),
+      order: z.enum(['asc', 'desc']).optional(),
+      cursor: z.string().optional(),
+      type: z.string().optional(),
+    },
+    async ({ server, session_id, limit, order, cursor, type }) => {
+      try {
+        return jsonResult(
+          await service.getSessionMessages(server, session_id, {
+            limit,
+            order,
+            cursor,
+            type,
+          }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'session_diff',
+    'Get structured diffs for a session turn.',
+    {
+      server: z.string().min(1),
+      session_id: z.string().min(1),
+      from: z.string().optional(),
+      to: z.string().optional(),
+      context: z.number().int().nonnegative().optional(),
+    },
+    async ({ server, session_id, from, to, context }) => {
+      try {
+        return jsonResult(
+          await service.getSessionDiff(server, session_id, {
+            from,
+            to,
+            context,
+          }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'sessions_search',
+    'Search sessions across configured servers.',
+    {
+      servers: z.array(z.string().min(1)).optional(),
+      query: z.string().min(1),
+      limit: z.number().int().positive().max(50).optional(),
+    },
+    async ({ servers, query, limit }) => {
+      try {
+        return jsonResult(await service.searchSessions(servers, query, limit));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'sessions_compare',
+    'Compare two sessions across configured servers.',
+    {
+      server_a: z.string().min(1),
+      session_a: z.string().min(1),
+      server_b: z.string().min(1),
+      session_b: z.string().min(1),
+    },
+    async ({ server_a, session_a, server_b, session_b }) => {
+      try {
+        return jsonResult(
+          await service.compareSessions(
+            server_a,
+            session_a,
+            server_b,
+            session_b,
+          ),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
   return server;
 }
 
