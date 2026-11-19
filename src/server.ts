@@ -15,17 +15,60 @@ export function createMcpServer(service: PeerService): McpServer {
   );
 
   server.tool(
+    'server_get',
+    'Get one configured OpenCode server.',
+    {
+      server: z.string().min(1),
+    },
+    async ({ server: serverId }) => {
+      try {
+        return jsonResult(service.getServer(serverId));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
     'sessions_list',
     'List sessions on a configured server.',
     {
       server: z.string().min(1),
       limit: z.number().int().positive().max(100).optional(),
       directory: z.string().optional(),
+      order: z.enum(['asc', 'desc']).optional(),
+      search: z.string().optional(),
+      archived: z.boolean().optional(),
+      parent_id: z.string().optional(),
+      cursor: z.string().optional(),
+      project: z.string().optional(),
+      subpath: z.string().optional(),
     },
-    async ({ server, limit, directory }) => {
+    async ({
+      server,
+      limit,
+      directory,
+      order,
+      archived,
+      parent_id,
+      cursor,
+      project,
+      subpath,
+      search,
+    }) => {
       try {
         return jsonResult(
-          await service.listSessions(server, { limit, directory }),
+          await service.listSessions(server, {
+            limit,
+            directory,
+            order,
+            search,
+            archived,
+            parentId: parent_id,
+            cursor,
+            project,
+            subpath,
+          }),
         );
       } catch (error) {
         return errorResult(error);

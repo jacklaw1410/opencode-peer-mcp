@@ -33,12 +33,22 @@ export async function loadConfig(
     raw = await readFile(path, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.error(
+        `opencode-peer-mcp: config not found at ${path}; starting with no servers`,
+      );
       return [];
     }
     throw error;
   }
 
-  const parsed = parse(raw);
+  let parsed: unknown;
+  try {
+    parsed = parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Invalid YAML in ${path}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
   const config = ConfigSchema.parse(parsed ?? {});
   const ids = new Set<string>();
   for (const server of config.servers) {
@@ -47,7 +57,11 @@ export async function loadConfig(
     }
     ids.add(server.id);
   }
-  return config.servers.map((server) =>
+  const servers = config.servers.map((server) =>
     toResolvedServer(server as ServerConfig),
   );
+  console.error(
+    `opencode-peer-mcp: loaded ${servers.length} server(s) from ${path}`,
+  );
+  return servers;
 }

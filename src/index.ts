@@ -8,9 +8,9 @@ import { createMcpServer } from './server.js';
 export async function main(): Promise<void> {
   const servers = await loadConfig();
   const service = new PeerService({ servers, http: new HttpClient() });
-  const server = createMcpServer(service);
+  const mcpServer = createMcpServer(service);
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  await mcpServer.connect(transport);
 }
 
 main().catch((error) => {

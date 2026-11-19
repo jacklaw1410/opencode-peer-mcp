@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { FIXED_USERNAME, resolveAuth, toResolvedServer } from '../src/auth.js';
+import { OPENCODE_USERNAME, resolveAuth, toResolvedServer } from '../src/auth.js';
 import type { ServerConfig } from '../src/types.js';
 
 afterEach(() => {
@@ -17,7 +17,7 @@ describe('resolveAuth', () => {
     };
     expect(resolveAuth(server)).toEqual({
       auth: 'basic',
-      username: FIXED_USERNAME,
+      username: OPENCODE_USERNAME,
       password: 'secret',
     });
   });

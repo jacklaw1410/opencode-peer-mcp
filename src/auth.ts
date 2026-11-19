@@ -1,6 +1,7 @@
 import type { AuthMode, ResolvedServer, ServerConfig } from './types.js';
 
-export const FIXED_USERNAME = 'opencode';
+export const OPENCODE_USERNAME = 'opencode';
+export const DEFAULT_TIMEOUT_MS = 15000;
 
 export function resolveAuth(server: ServerConfig): {
   auth: AuthMode;
@@ -24,7 +25,11 @@ export function resolveAuth(server: ServerConfig): {
         `Environment variable "${server.password_env}" is not set for server "${server.id}"`,
       );
     }
-    return { auth: 'basic', username: FIXED_USERNAME, password };
+    return {
+      auth: 'basic',
+      username: server.username ?? OPENCODE_USERNAME,
+      password,
+    };
   }
 
   if (requested === 'bearer') {
@@ -47,14 +52,33 @@ export function resolveAuth(server: ServerConfig): {
 
 export function toResolvedServer(server: ServerConfig): ResolvedServer {
   const auth = resolveAuth(server);
+  const timeoutMs = server.timeout_ms ?? DEFAULT_TIMEOUT_MS;
+  if (auth.auth === 'basic') {
+    return {
+      id: server.id,
+      url: server.url,
+      auth: 'basic',
+      username: auth.username ?? OPENCODE_USERNAME,
+      password: auth.password!,
+      timeoutMs,
+      allowlist: server.allowlist ?? [],
+    };
+  }
+  if (auth.auth === 'bearer') {
+    return {
+      id: server.id,
+      url: server.url,
+      auth: 'bearer',
+      token: auth.token!,
+      timeoutMs,
+      allowlist: server.allowlist ?? [],
+    };
+  }
   return {
     id: server.id,
     url: server.url,
-    auth: auth.auth,
-    username: auth.username,
-    password: auth.password,
-    token: auth.token,
-    timeoutMs: server.timeout_ms ?? 15000,
+    auth: 'none',
+    timeoutMs,
     allowlist: server.allowlist ?? [],
   };
 }

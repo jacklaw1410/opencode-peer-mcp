@@ -17,6 +17,13 @@ describe('createMcpServer', () => {
       ]),
       listSessions: vi.fn(),
       getSession: vi.fn(),
+      getServer: vi.fn(() => ({
+        id: 'local',
+        url: 'http://example.test',
+        auth: 'none',
+        timeoutMs: 1,
+        allowlist: [],
+      })),
     };
     const server = createMcpServer(service as never);
     const [clientTransport, serverTransport] =
@@ -32,6 +39,7 @@ describe('createMcpServer', () => {
     const tools = await client.listTools();
     expect(tools.tools.map((tool) => tool.name)).toEqual([
       'servers_list',
+      'server_get',
       'sessions_list',
       'session_get',
     ]);

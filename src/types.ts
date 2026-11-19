@@ -3,6 +3,7 @@ export type AuthMode = 'basic' | 'bearer' | 'none';
 export interface ServerConfig {
   id: string;
   url: string;
+  username?: string;
   password_env?: string;
   token_env?: string;
   auth?: AuthMode;
@@ -10,13 +11,28 @@ export interface ServerConfig {
   allowlist?: string[];
 }
 
-export interface ResolvedServer {
-  id: string;
-  url: string;
-  auth: AuthMode;
-  username?: string;
-  password?: string;
-  token?: string;
-  timeoutMs: number;
-  allowlist: string[];
-}
+export type ResolvedServer =
+  | {
+      id: string;
+      url: string;
+      auth: 'basic';
+      username: string;
+      password: string;
+      timeoutMs: number;
+      allowlist: string[];
+    }
+  | {
+      id: string;
+      url: string;
+      auth: 'bearer';
+      token: string;
+      timeoutMs: number;
+      allowlist: string[];
+    }
+  | {
+      id: string;
+      url: string;
+      auth: 'none';
+      timeoutMs: number;
+      allowlist: string[];
+    };

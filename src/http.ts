@@ -1,5 +1,7 @@
 import type { ResolvedServer } from './types.js';
 
+// Uses the platform fetch API against the OpenCode OpenAPI endpoints.
+
 export class HttpError extends Error {
   constructor(
     public readonly status: number,
