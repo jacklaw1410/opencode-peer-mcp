@@ -202,6 +202,71 @@ export function createMcpServer(service: PeerService): McpServer {
     },
   );
 
+  server.tool(
+    'session_create',
+    'Create a session on a configured server.',
+    {
+      server: z.string().min(1),
+      directory: z.string().min(1),
+      title: z.string().optional(),
+      agent: z.string().optional(),
+      model: z.string().optional(),
+      allow: z.boolean().optional(),
+    },
+    async ({ server, directory, title, agent, model, allow }) => {
+      try {
+        return jsonResult(
+          await service.createSession(
+            server,
+            { directory, title, agent, model },
+            { allow },
+          ),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'session_prompt',
+    'Prompt a session on a configured server.',
+    {
+      server: z.string().min(1),
+      session_id: z.string().min(1),
+      prompt: z.string().min(1),
+      allow: z.boolean().optional(),
+    },
+    async ({ server, session_id, prompt, allow }) => {
+      try {
+        return jsonResult(
+          await service.promptSession(server, session_id, prompt, { allow }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'session_interrupt',
+    'Interrupt a session on a configured server.',
+    {
+      server: z.string().min(1),
+      session_id: z.string().min(1),
+      allow: z.boolean().optional(),
+    },
+    async ({ server, session_id, allow }) => {
+      try {
+        return jsonResult(
+          await service.interruptSession(server, session_id, { allow }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
   return server;
 }
 

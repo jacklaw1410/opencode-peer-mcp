@@ -47,6 +47,9 @@ describe('createMcpServer', () => {
       'session_diff',
       'sessions_search',
       'sessions_compare',
+      'session_create',
+      'session_prompt',
+      'session_interrupt',
     ]);
 
     const result = await client.callTool({
