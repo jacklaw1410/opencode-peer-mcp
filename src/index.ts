@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadConfig } from "./config.js";
-import { HttpClient } from "./http.js";
-import { PeerService } from "./service.js";
-import { createMcpServer } from "./server.js";
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { loadConfig } from './config.js';
+import { HttpClient } from './http.js';
+import { PeerService } from './service.js';
+import { createMcpServer } from './server.js';
 
 export async function main(): Promise<void> {
   const servers = await loadConfig();

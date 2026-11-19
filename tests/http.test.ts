@@ -1,28 +1,28 @@
-import { describe, expect, it, vi } from "vitest";
-import { HttpClient, HttpError } from "../src/http.js";
-import type { ResolvedServer } from "../src/types.js";
+import { describe, expect, it, vi } from 'vitest';
+import { HttpClient, HttpError } from '../src/http.js';
+import type { ResolvedServer } from '../src/types.js';
 
 const server: ResolvedServer = {
-  id: "local",
-  url: "http://example.test/",
-  auth: "basic",
-  username: "opencode",
-  password: "secret",
+  id: 'local',
+  url: 'http://example.test/',
+  auth: 'basic',
+  username: 'opencode',
+  password: 'secret',
   timeoutMs: 1000,
   allowlist: [],
 };
 
-describe("HttpClient", () => {
-  it("sends basic auth and parses JSON", async () => {
+describe('HttpClient', () => {
+  it('sends basic auth and parses JSON', async () => {
     const fetchImpl = vi.fn(
       async () =>
         new Response(JSON.stringify({ ok: true }), {
           status: 200,
-          headers: { "content-type": "application/json" },
+          headers: { 'content-type': 'application/json' },
         }),
     );
     const client = new HttpClient(fetchImpl as typeof fetch);
-    const result = await client.request(server, "/api/session");
+    const result = await client.request(server, '/api/session');
     expect(result).toEqual({ ok: true });
     expect(fetchImpl).toHaveBeenCalledWith(
       expect.any(URL),
@@ -34,11 +34,11 @@ describe("HttpClient", () => {
     );
   });
 
-  it("throws HttpError on non-ok responses", async () => {
-    const fetchImpl = vi.fn(async () => new Response("nope", { status: 404 }));
+  it('throws HttpError on non-ok responses', async () => {
+    const fetchImpl = vi.fn(async () => new Response('nope', { status: 404 }));
     const client = new HttpClient(fetchImpl as typeof fetch);
     await expect(
-      client.request(server, "/api/session/missing"),
+      client.request(server, '/api/session/missing'),
     ).rejects.toBeInstanceOf(HttpError);
   });
 });

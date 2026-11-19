@@ -1,6 +1,6 @@
-import type { AuthMode, ResolvedServer, ServerConfig } from "./types.js";
+import type { AuthMode, ResolvedServer, ServerConfig } from './types.js';
 
-export const FIXED_USERNAME = "opencode";
+export const FIXED_USERNAME = 'opencode';
 
 export function resolveAuth(server: ServerConfig): {
   auth: AuthMode;
@@ -10,9 +10,9 @@ export function resolveAuth(server: ServerConfig): {
 } {
   const requested =
     server.auth ??
-    (server.password_env ? "basic" : server.token_env ? "bearer" : "none");
+    (server.password_env ? 'basic' : server.token_env ? 'bearer' : 'none');
 
-  if (requested === "basic") {
+  if (requested === 'basic') {
     if (!server.password_env) {
       throw new Error(
         `Server "${server.id}" uses basic auth but has no password_env`,
@@ -24,10 +24,10 @@ export function resolveAuth(server: ServerConfig): {
         `Environment variable "${server.password_env}" is not set for server "${server.id}"`,
       );
     }
-    return { auth: "basic", username: FIXED_USERNAME, password };
+    return { auth: 'basic', username: FIXED_USERNAME, password };
   }
 
-  if (requested === "bearer") {
+  if (requested === 'bearer') {
     if (!server.token_env) {
       throw new Error(
         `Server "${server.id}" uses bearer auth but has no token_env`,
@@ -39,10 +39,10 @@ export function resolveAuth(server: ServerConfig): {
         `Environment variable "${server.token_env}" is not set for server "${server.id}"`,
       );
     }
-    return { auth: "bearer", token };
+    return { auth: 'bearer', token };
   }
 
-  return { auth: "none" };
+  return { auth: 'none' };
 }
 
 export function toResolvedServer(server: ServerConfig): ResolvedServer {

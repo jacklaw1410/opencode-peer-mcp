@@ -1,5 +1,5 @@
-import type { ResolvedServer } from "./types.js";
-import { HttpClient } from "./http.js";
+import type { ResolvedServer } from './types.js';
+import { HttpClient } from './http.js';
 
 export interface PeerServiceOptions {
   servers: ResolvedServer[];
@@ -12,7 +12,7 @@ export class PeerService {
   listServers(): Array<{
     id: string;
     url: string;
-    auth: ResolvedServer["auth"];
+    auth: ResolvedServer['auth'];
     timeoutMs: number;
     allowlist: string[];
   }> {
@@ -37,7 +37,7 @@ export class PeerService {
   ): Promise<unknown> {
     const server = this.getServer(serverId);
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 100);
-    return this.options.http.request(server, "/api/session", {
+    return this.options.http.request(server, '/api/session', {
       query: { limit, directory: params.directory },
     });
   }

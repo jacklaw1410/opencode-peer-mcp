@@ -1,4 +1,4 @@
-export type AuthMode = "basic" | "bearer" | "none";
+export type AuthMode = 'basic' | 'bearer' | 'none';
 
 export interface ServerConfig {
   id: string;

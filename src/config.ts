@@ -1,15 +1,15 @@
-import { readFile } from "node:fs/promises";
-import { parse } from "yaml";
-import { z } from "zod";
-import { toResolvedServer } from "./auth.js";
-import type { ResolvedServer, ServerConfig } from "./types.js";
+import { readFile } from 'node:fs/promises';
+import { parse } from 'yaml';
+import { z } from 'zod';
+import { toResolvedServer } from './auth.js';
+import type { ResolvedServer, ServerConfig } from './types.js';
 
 const ServerSchema = z.object({
   id: z.string().min(1),
   url: z.string().url(),
   password_env: z.string().min(1).optional(),
   token_env: z.string().min(1).optional(),
-  auth: z.enum(["basic", "bearer", "none"]).optional(),
+  auth: z.enum(['basic', 'bearer', 'none']).optional(),
   timeout_ms: z.number().int().positive().optional(),
   allowlist: z.array(z.string()).optional(),
 });
@@ -21,7 +21,7 @@ const ConfigSchema = z.object({
 export function defaultConfigPath(): string {
   return (
     process.env.OPENCODE_PEER_MCP_CONFIG ??
-    `${process.env.HOME ?? ""}/.config/opencode-peer-mcp/servers.yaml`
+    `${process.env.HOME ?? ''}/.config/opencode-peer-mcp/servers.yaml`
   );
 }
 
@@ -30,9 +30,9 @@ export async function loadConfig(
 ): Promise<ResolvedServer[]> {
   let raw: string;
   try {
-    raw = await readFile(path, "utf8");
+    raw = await readFile(path, 'utf8');
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return [];
     }
     throw error;
