@@ -14,7 +14,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Install OpenCode
         run: |
-          curl -fsSL https://opencode.ai/install | bash -s -- --version 2.3.2
+          curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.3.2
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
