@@ -19,7 +19,7 @@ export class Logger {
       `${process.env.HOME ?? ''}/.opencode-peer-mcp/audit.log`,
   ) {}
 
-  async record(entry: LogEntry): Promise<void> {
+  async log(entry: LogEntry): Promise<void> {
     await mkdir(dirname(this.path), { recursive: true });
     await appendFile(this.path, `${JSON.stringify(entry)}\n`, 'utf8');
     if (entry.level === 'warn' || entry.level === 'error') {

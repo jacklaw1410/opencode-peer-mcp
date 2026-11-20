@@ -390,6 +390,6 @@ export class PeerService {
       allowlistDecision,
       result,
     };
-    await this.logger.record(entry);
+    await this.logger.log(entry);
   }
 }

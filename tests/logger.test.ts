@@ -18,7 +18,7 @@ describe('Logger', () => {
     dirs.push(dir);
     const path = join(dir, 'audit.log');
     const logger = new Logger(path);
-    await logger.record({
+    await logger.log({
       timestamp: '2026-01-01T00:00:00.000Z',
       level: 'info',
       server: 'local',

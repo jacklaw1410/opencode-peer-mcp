@@ -119,7 +119,7 @@ describe('PeerService', () => {
 describe('PeerService writes', () => {
   it('denies writes when the gate is closed', async () => {
     const http = { request: vi.fn() };
-    const logger = { record: vi.fn(async () => undefined) };
+    const logger = { log: vi.fn(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,
@@ -130,12 +130,12 @@ describe('PeerService writes', () => {
       service.promptSession('local', 'session-1', 'hello', { allowed: true }),
     ).rejects.toThrow(/Write denied/);
     expect(http.request).not.toHaveBeenCalled();
-    expect(logger.record).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 
   it('allows writes when enabled and allowlisted', async () => {
     const http = { request: vi.fn(async () => ({ ok: true })) };
-    const logger = { record: vi.fn(async () => undefined) };
+    const logger = { log: vi.fn(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,
@@ -144,6 +144,6 @@ describe('PeerService writes', () => {
     });
     await service.promptSession('local', 'session-1', 'hello');
     expect(http.request).toHaveBeenCalled();
-    expect(logger.record).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 });
