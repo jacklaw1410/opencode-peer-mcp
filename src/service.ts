@@ -238,7 +238,7 @@ export class PeerService {
         sessionId = data?.id ?? sessionId;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.logRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_create',
@@ -248,7 +248,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.logRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_create',
@@ -284,7 +284,7 @@ export class PeerService {
           { method: 'POST', body: { text: prompt } },
         );
         result = 'success';
-        await this.logRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_prompt',
@@ -294,7 +294,7 @@ export class PeerService {
         return response;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.logRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_prompt',
@@ -304,7 +304,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.logRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_prompt',
@@ -338,7 +338,7 @@ export class PeerService {
           { method: 'POST' },
         );
         result = 'success';
-        await this.logRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_interrupt',
@@ -348,7 +348,7 @@ export class PeerService {
         return response;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.logRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_interrupt',
@@ -358,7 +358,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.logRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_interrupt',
@@ -368,7 +368,7 @@ export class PeerService {
     throw new Error(`Write denied: ${gate.decision}`);
   }
 
-  private async logRecord(
+  private async log(
     server: string,
     session: string,
     tool: string,
