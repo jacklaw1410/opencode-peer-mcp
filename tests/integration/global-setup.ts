@@ -88,6 +88,10 @@ export default async function globalSetup(): Promise<void> {
     await rm(ROOT, { recursive: true, force: true });
     await mkdir(ROOT, { recursive: true });
     await mkdir(`${ROOT}/work`, { recursive: true });
+    await mkdir(`${ROOT}/data-49421`, { recursive: true });
+    await mkdir(`${ROOT}/data-49422`, { recursive: true });
+    await mkdir(`${ROOT}/config-49421`, { recursive: true });
+    await mkdir(`${ROOT}/config-49422`, { recursive: true });
 
     for (const port of [49421, 49422]) {
       const child = spawn(
@@ -98,6 +102,8 @@ export default async function globalSetup(): Promise<void> {
             PATH: process.env.PATH ?? '',
             HOME: process.env.HOME ?? '',
             OPENCODE_PASSWORD: PASSWORD,
+            XDG_DATA_HOME: `${ROOT}/data-${port}`,
+            XDG_CONFIG_HOME: `${ROOT}/config-${port}`,
           },
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: true,
