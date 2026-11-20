@@ -1,15 +1,15 @@
-export interface WriteGateInput {
+export interface PermissionInput {
   globalEnabled: boolean;
   allowlisted: boolean;
   explicitAllow: boolean;
 }
 
-export interface WriteGateResult {
+export interface PermissionResult {
   allowed: boolean;
   decision: string;
 }
 
-export function evaluateWriteGate(input: WriteGateInput): WriteGateResult {
+export function evaluatePermission(input: PermissionInput): PermissionResult {
   if (!input.globalEnabled) {
     return { allowed: false, decision: 'denied: writes disabled' };
   }

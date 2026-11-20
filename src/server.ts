@@ -211,15 +211,15 @@ export function createMcpServer(service: PeerService): McpServer {
       title: z.string().optional(),
       agent: z.string().optional(),
       model: z.string().optional(),
-      allow: z.boolean().optional(),
+      allowed: z.boolean().optional(),
     },
-    async ({ server, directory, title, agent, model, allow }) => {
+    async ({ server, directory, title, agent, model, allowed }) => {
       try {
         return jsonResult(
           await service.createSession(
             server,
             { directory, title, agent, model },
-            { allow },
+            { allowed },
           ),
         );
       } catch (error) {
@@ -235,12 +235,12 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z.string().min(1),
       session_id: z.string().min(1),
       prompt: z.string().min(1),
-      allow: z.boolean().optional(),
+      allowed: z.boolean().optional(),
     },
-    async ({ server, session_id, prompt, allow }) => {
+    async ({ server, session_id, prompt, allowed }) => {
       try {
         return jsonResult(
-          await service.promptSession(server, session_id, prompt, { allow }),
+          await service.promptSession(server, session_id, prompt, { allowed }),
         );
       } catch (error) {
         return errorResult(error);
@@ -254,12 +254,12 @@ export function createMcpServer(service: PeerService): McpServer {
     {
       server: z.string().min(1),
       session_id: z.string().min(1),
-      allow: z.boolean().optional(),
+      allowed: z.boolean().optional(),
     },
-    async ({ server, session_id, allow }) => {
+    async ({ server, session_id, allowed }) => {
       try {
         return jsonResult(
-          await service.interruptSession(server, session_id, { allow }),
+          await service.interruptSession(server, session_id, { allowed }),
         );
       } catch (error) {
         return errorResult(error);

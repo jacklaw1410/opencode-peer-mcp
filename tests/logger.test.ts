@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AuditLogger } from '../src/audit.js';
+import { Logger } from '../src/logger.js';
 
 const dirs: string[] = [];
 
@@ -12,24 +12,23 @@ afterEach(async () => {
   );
 });
 
-describe('AuditLogger', () => {
+describe('Logger', () => {
   it('appends JSON lines', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'audit-'));
     dirs.push(dir);
     const path = join(dir, 'audit.log');
-    const logger = new AuditLogger(path);
+    const logger = new Logger(path);
     await logger.record({
       timestamp: '2026-01-01T00:00:00.000Z',
       server: 'local',
       session: 'session-1',
       tool: 'session_prompt',
-      confirm: null,
       allowlistDecision: 'allowed',
       result: 'success',
     });
     const content = await readFile(path, 'utf8');
     expect(content.trim()).toBe(
-      '{"timestamp":"2026-01-01T00:00:00.000Z","server":"local","session":"session-1","tool":"session_prompt","confirm":null,"allowlistDecision":"allowed","result":"success"}',
+      '{"timestamp":"2026-01-01T00:00:00.000Z","server":"local","session":"session-1","tool":"session_prompt","allowlistDecision":"allowed","result":"success"}',
     );
   });
 });
