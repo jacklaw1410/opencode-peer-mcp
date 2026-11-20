@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -18,13 +19,13 @@ function basicAuth(): string {
 }
 
 async function waitForServer(port: number): Promise<void> {
-  const deadline = Date.now() + 30000;
+  const deadline = Date.now() + 60000;
   while (Date.now() < deadline) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/api/session?limit=1`, {
         headers: { authorization: basicAuth() },
       });
-      if (res.ok) return;
+      if (res.status < 500) return;
     } catch {
       // server not ready yet
     }
@@ -67,7 +68,7 @@ async function stopServers(pids: number[]): Promise<void> {
       }
     }
   }
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   for (const pid of pids) {
     try {
       process.kill(-pid, 'SIGKILL');
@@ -88,20 +89,6 @@ export default async function globalSetup(): Promise<void> {
     await mkdir(ROOT, { recursive: true });
     await mkdir(`${ROOT}/work`, { recursive: true });
 
-    const yaml = [
-      'servers:',
-      '  - id: alpha',
-      '    url: http://127.0.0.1:49421',
-      '    password_env: OPENCODE_ALPHA_PASSWORD',
-      '    allowlist:',
-      "      - '*'",
-      '  - id: beta',
-      '    url: http://127.0.0.1:49422',
-      '    password_env: OPENCODE_BETA_PASSWORD',
-      '',
-    ].join('\n');
-    await writeFile(`${ROOT}/servers.yaml`, yaml, 'utf8');
-
     for (const port of [49421, 49422]) {
       const child = spawn(
         'opencode',
@@ -112,13 +99,18 @@ export default async function globalSetup(): Promise<void> {
             HOME: process.env.HOME ?? '',
             OPENCODE_PASSWORD: PASSWORD,
           },
-          stdio: 'ignore',
+          stdio: ['ignore', 'pipe', 'pipe'],
           detached: true,
         },
       );
       child.unref();
       if (!child.pid)
         throw new Error(`Failed to spawn OpenCode on port ${port}`);
+      const logStream = createWriteStream(`${ROOT}/opencode-${port}.log`, {
+        flags: 'a',
+      });
+      child.stdout?.pipe(logStream);
+      child.stderr?.pipe(logStream);
       pids.push(child.pid);
     }
 
@@ -129,6 +121,21 @@ export default async function globalSetup(): Promise<void> {
       createSession(49422),
     ]);
 
+    const yaml = [
+      'servers:',
+      '  - id: alpha',
+      '    url: http://127.0.0.1:49421',
+      '    password_env: OPENCODE_ALPHA_PASSWORD',
+      '    allowlist:',
+      `      - '${alphaSessionId}'`,
+      "      - 'create'",
+      '  - id: beta',
+      '    url: http://127.0.0.1:49422',
+      '    password_env: OPENCODE_BETA_PASSWORD',
+      '',
+    ].join('\n');
+    await writeFile(`${ROOT}/servers.yaml`, yaml, 'utf8');
+
     await writeFile(
       `${ROOT}/state.json`,
       JSON.stringify({ alphaSessionId, betaSessionId }, null, 2),
@@ -136,6 +143,17 @@ export default async function globalSetup(): Promise<void> {
     );
     await writeFile(`${ROOT}/pids.json`, JSON.stringify(pids), 'utf8');
   } catch (error) {
+    for (const port of [49421, 49422]) {
+      try {
+        const { readFileSync } = await import('node:fs');
+        console.error(`--- opencode ${port} log ---`);
+        console.error(
+          readFileSync(`${ROOT}/opencode-${port}.log`, 'utf8').slice(-4000),
+        );
+      } catch {
+        // ignore
+      }
+    }
     await stopServers(pids);
     await rm(ROOT, { recursive: true, force: true });
     throw error;
