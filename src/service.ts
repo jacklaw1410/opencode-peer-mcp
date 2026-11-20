@@ -375,8 +375,15 @@ export class PeerService {
     allowlistDecision: string,
     result: string,
   ): Promise<void> {
+    const level =
+      result === 'success'
+        ? 'info'
+        : result.startsWith('denied')
+          ? 'warn'
+          : 'error';
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
+      level,
       server,
       session,
       tool,

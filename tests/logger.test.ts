@@ -20,6 +20,7 @@ describe('Logger', () => {
     const logger = new Logger(path);
     await logger.record({
       timestamp: '2026-01-01T00:00:00.000Z',
+      level: 'info',
       server: 'local',
       session: 'session-1',
       tool: 'session_prompt',
@@ -28,7 +29,7 @@ describe('Logger', () => {
     });
     const content = await readFile(path, 'utf8');
     expect(content.trim()).toBe(
-      '{"timestamp":"2026-01-01T00:00:00.000Z","server":"local","session":"session-1","tool":"session_prompt","allowlistDecision":"allowed","result":"success"}',
+      '{"timestamp":"2026-01-01T00:00:00.000Z","level":"info","server":"local","session":"session-1","tool":"session_prompt","allowlistDecision":"allowed","result":"success"}',
     );
   });
 });
