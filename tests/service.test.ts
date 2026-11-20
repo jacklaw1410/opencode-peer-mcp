@@ -119,31 +119,31 @@ describe('PeerService', () => {
 describe('PeerService writes', () => {
   it('denies writes when the gate is closed', async () => {
     const http = { request: vi.fn() };
-    const audit = { record: vi.fn(async () => undefined) };
+    const logger = { log: vi.fn(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,
-      writeEnabled: false,
-      audit: audit as never,
+      writable: false,
+      logger: logger as never,
     });
     await expect(
-      service.promptSession('local', 'session-1', 'hello', { allow: true }),
+      service.promptSession('local', 'session-1', 'hello', { allowed: true }),
     ).rejects.toThrow(/Write denied/);
     expect(http.request).not.toHaveBeenCalled();
-    expect(audit.record).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 
   it('allows writes when enabled and allowlisted', async () => {
     const http = { request: vi.fn(async () => ({ ok: true })) };
-    const audit = { record: vi.fn(async () => undefined) };
+    const logger = { log: vi.fn(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,
-      writeEnabled: true,
-      audit: audit as never,
+      writable: true,
+      logger: logger as never,
     });
     await service.promptSession('local', 'session-1', 'hello');
     expect(http.request).toHaveBeenCalled();
-    expect(audit.record).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 });

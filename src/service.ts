@@ -1,13 +1,13 @@
 import type { ResolvedServer } from './types.js';
 import { HttpClient } from './http.js';
-import { AuditLogger, type AuditEntry } from './audit.js';
-import { evaluateWriteGate } from './writeGate.js';
+import { Logger, type LogEntry } from './logger.js';
+import { evaluatePermission } from './permission.js';
 
 export interface PeerServiceOptions {
   servers: ResolvedServer[];
   http: HttpClient;
-  writeEnabled?: boolean;
-  audit?: AuditLogger;
+  writable?: boolean;
+  logger?: Logger;
 }
 
 export interface SessionListOptions {
@@ -36,18 +36,18 @@ export interface SessionDiffOptions {
 }
 
 export interface WriteOptions {
-  allow?: boolean;
+  allowed?: boolean;
 }
 
 export class PeerService {
-  private readonly writeEnabled: boolean;
-  private readonly audit: AuditLogger;
+  private readonly writable: boolean;
+  private readonly logger: Logger;
 
   constructor(private readonly options: PeerServiceOptions) {
-    this.writeEnabled =
-      options.writeEnabled ??
+    this.writable =
+      options.writable ??
       process.env.OPENCODE_PEER_MCP_WRITE_ENABLED === 'true';
-    this.audit = options.audit ?? new AuditLogger();
+    this.logger = options.logger ?? new Logger();
   }
 
   listServers(): Array<{
@@ -218,11 +218,11 @@ export class PeerService {
     const allowlisted =
       server.allowlist.includes('*') ||
       server.allowlist.includes('create') ||
-      Boolean(options.allow);
-    const gate = evaluateWriteGate({
-      globalEnabled: this.writeEnabled,
+      Boolean(options.allowed);
+    const gate = evaluatePermission({
+      globalEnabled: this.writable,
       allowlisted,
-      explicitAllow: Boolean(options.allow),
+      explicitAllow: Boolean(options.allowed),
     });
     let result = 'denied';
     let sessionId = '__create__';
@@ -238,7 +238,7 @@ export class PeerService {
         sessionId = data?.id ?? sessionId;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.auditRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_create',
@@ -248,7 +248,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.auditRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_create',
@@ -269,11 +269,11 @@ export class PeerService {
     const allowlisted =
       server.allowlist.includes('*') ||
       server.allowlist.includes(sessionId) ||
-      Boolean(options.allow);
-    const gate = evaluateWriteGate({
-      globalEnabled: this.writeEnabled,
+      Boolean(options.allowed);
+    const gate = evaluatePermission({
+      globalEnabled: this.writable,
       allowlisted,
-      explicitAllow: Boolean(options.allow),
+      explicitAllow: Boolean(options.allowed),
     });
     let result = 'denied';
     if (gate.allowed) {
@@ -284,7 +284,7 @@ export class PeerService {
           { method: 'POST', body: { text: prompt } },
         );
         result = 'success';
-        await this.auditRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_prompt',
@@ -294,7 +294,7 @@ export class PeerService {
         return response;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.auditRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_prompt',
@@ -304,7 +304,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.auditRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_prompt',
@@ -323,11 +323,11 @@ export class PeerService {
     const allowlisted =
       server.allowlist.includes('*') ||
       server.allowlist.includes(sessionId) ||
-      Boolean(options.allow);
-    const gate = evaluateWriteGate({
-      globalEnabled: this.writeEnabled,
+      Boolean(options.allowed);
+    const gate = evaluatePermission({
+      globalEnabled: this.writable,
       allowlisted,
-      explicitAllow: Boolean(options.allow),
+      explicitAllow: Boolean(options.allowed),
     });
     let result = 'denied';
     if (gate.allowed) {
@@ -338,7 +338,7 @@ export class PeerService {
           { method: 'POST' },
         );
         result = 'success';
-        await this.auditRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_interrupt',
@@ -348,7 +348,7 @@ export class PeerService {
         return response;
       } catch (error) {
         result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.auditRecord(
+        await this.log(
           serverId,
           sessionId,
           'session_interrupt',
@@ -358,7 +358,7 @@ export class PeerService {
         throw error;
       }
     }
-    await this.auditRecord(
+    await this.log(
       serverId,
       sessionId,
       'session_interrupt',
@@ -368,22 +368,28 @@ export class PeerService {
     throw new Error(`Write denied: ${gate.decision}`);
   }
 
-  private async auditRecord(
+  private async log(
     server: string,
     session: string,
     tool: string,
     allowlistDecision: string,
     result: string,
   ): Promise<void> {
-    const entry: AuditEntry = {
+    const level =
+      result === 'success'
+        ? 'info'
+        : result.startsWith('denied')
+          ? 'warn'
+          : 'error';
+    const entry: LogEntry = {
       timestamp: new Date().toISOString(),
+      level,
       server,
       session,
       tool,
-      confirm: null,
       allowlistDecision,
       result,
     };
-    await this.audit.record(entry);
+    await this.logger.log(entry);
   }
 }

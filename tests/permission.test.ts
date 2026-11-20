@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateWriteGate } from '../src/writeGate.js';
+import { evaluatePermission } from '../src/permission.js';
 
-describe('evaluateWriteGate', () => {
+describe('evaluatePermission', () => {
   it('allows when enabled and allowlisted', () => {
     expect(
-      evaluateWriteGate({
+      evaluatePermission({
         globalEnabled: true,
         allowlisted: true,
         explicitAllow: false,
@@ -17,7 +17,7 @@ describe('evaluateWriteGate', () => {
 
   it('denies when disabled', () => {
     expect(
-      evaluateWriteGate({
+      evaluatePermission({
         globalEnabled: false,
         allowlisted: true,
         explicitAllow: true,
@@ -30,7 +30,7 @@ describe('evaluateWriteGate', () => {
 
   it('denies when not allowlisted', () => {
     expect(
-      evaluateWriteGate({
+      evaluatePermission({
         globalEnabled: true,
         allowlisted: false,
         explicitAllow: false,
