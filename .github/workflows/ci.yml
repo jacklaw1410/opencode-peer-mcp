@@ -12,9 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+      - name: Install OpenCode
+        run: |
+          curl -fsSL https://opencode.ai/install | bash -s -- --version 2.3.2
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run lint
       - run: bun run format:check
       - run: bun run test
       - run: bun run build
+      - run: bunx playwright install --with-deps
+      - run: bun run test:integration
+        env:
+          OPENCODE_PASSWORD: testpass
