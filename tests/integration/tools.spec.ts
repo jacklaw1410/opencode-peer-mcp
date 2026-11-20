@@ -3,15 +3,22 @@ import { test, expect } from '@gleanwork/mcp-server-tester/fixtures/mcp';
 test('lists the expected tools', async ({ mcp }) => {
   const tools = await mcp.listTools();
   const names = tools.map((tool) => tool.name);
-  for (const name of [
+  const expected = [
     'servers_list',
+    'server_get',
     'sessions_list',
     'session_get',
+    'session_status',
+    'session_messages',
+    'session_diff',
     'sessions_search',
     'sessions_compare',
-  ]) {
-    expect(names).toContain(name);
-  }
+    'session_create',
+    'session_prompt',
+    'session_interrupt',
+  ];
+  expect(names).toEqual(expect.arrayContaining(expected));
+  expect(names).toHaveLength(expected.length);
 });
 
 test('servers_list returns configured servers', async ({ mcp }) => {

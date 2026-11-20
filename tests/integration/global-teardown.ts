@@ -4,10 +4,13 @@ import { rm } from 'node:fs/promises';
 const ROOT =
   process.env.OPENCODE_PEER_MCP_INTEGRATION_ROOT ??
   '/tmp/opencode-peer-mcp-integration';
-const PASSWORD = process.env.OPENCODE_PASSWORD ?? 'testpass';
-
-function basicAuth(): string {
-  return `Basic ${Buffer.from(`opencode:${PASSWORD}`).toString('base64')}`;
+const ALPHA_PASSWORD = process.env.OPENCODE_ALPHA_PASSWORD ?? 'alpha-pass';
+const BETA_PASSWORD = process.env.OPENCODE_BETA_PASSWORD ?? 'beta-pass';
+function passwordFor(port: number): string {
+  return port === 49421 ? ALPHA_PASSWORD : BETA_PASSWORD;
+}
+function basicAuth(password: string): string {
+  return `Basic ${Buffer.from(`opencode:${password}`).toString('base64')}`;
 }
 
 export default async function globalTeardown(): Promise<void> {
@@ -42,7 +45,7 @@ export default async function globalTeardown(): Promise<void> {
     try {
       await fetch(`http://127.0.0.1:${port}/api/session/${sessionId}`, {
         method: 'DELETE',
-        headers: { authorization: basicAuth() },
+        headers: { authorization: basicAuth(passwordFor(port)) },
       });
     } catch {
       // ignore cleanup failures

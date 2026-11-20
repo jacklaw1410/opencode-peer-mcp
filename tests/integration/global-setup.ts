@@ -12,10 +12,14 @@ const allowedRoot = path.resolve(os.tmpdir());
 if (!resolvedRoot.startsWith(`${allowedRoot}${path.sep}`)) {
   throw new Error(`Unsafe integration root: ${resolvedRoot}`);
 }
-const PASSWORD = process.env.OPENCODE_PASSWORD ?? 'testpass';
+const ALPHA_PASSWORD = process.env.OPENCODE_ALPHA_PASSWORD ?? 'alpha-pass';
+const BETA_PASSWORD = process.env.OPENCODE_BETA_PASSWORD ?? 'beta-pass';
+function passwordFor(port: number): string {
+  return port === 49421 ? ALPHA_PASSWORD : BETA_PASSWORD;
+}
 
-function basicAuth(): string {
-  return `Basic ${Buffer.from(`opencode:${PASSWORD}`).toString('base64')}`;
+function basicAuth(password: string): string {
+  return `Basic ${Buffer.from(`opencode:${password}`).toString('base64')}`;
 }
 
 async function waitForServer(port: number): Promise<void> {
@@ -23,7 +27,7 @@ async function waitForServer(port: number): Promise<void> {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/api/session?limit=1`, {
-        headers: { authorization: basicAuth() },
+        headers: { authorization: basicAuth(passwordFor(port)) },
       });
       if (res.status < 500) return;
     } catch {
@@ -39,7 +43,7 @@ async function createSession(port: number): Promise<string> {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: basicAuth(),
+      authorization: basicAuth(passwordFor(port)),
     },
     body: JSON.stringify({
       directory: `${ROOT}/work`,
@@ -101,7 +105,7 @@ export default async function globalSetup(): Promise<void> {
           env: {
             PATH: process.env.PATH ?? '',
             HOME: process.env.HOME ?? '',
-            OPENCODE_PASSWORD: PASSWORD,
+            OPENCODE_PASSWORD: passwordFor(port),
             XDG_DATA_HOME: `${ROOT}/data-${port}`,
             XDG_CONFIG_HOME: `${ROOT}/config-${port}`,
           },
