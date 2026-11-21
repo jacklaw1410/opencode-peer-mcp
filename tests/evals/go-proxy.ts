@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { appendFileSync } from 'node:fs';
 import {
   createServer,
   type IncomingHttpHeaders,
@@ -17,6 +18,9 @@ export interface GoProxyOptions {
   clientToken: string;
   upstream?: string;
   upstreamTimeoutMs?: number;
+  // When set, each upstream exchange is appended here as one JSON line.
+  // Request headers are not logged, so the Go key and proxy token stay out.
+  logFile?: string;
 }
 
 const DEFAULT_UPSTREAM = 'https://opencode.ai/inference/go/openai/v1';
@@ -108,6 +112,28 @@ function sendText(res: ServerResponse, status: number, text: string): void {
   res.end(text);
 }
 
+function logExchange(
+  file: string | undefined,
+  entry: {
+    path: string;
+    status: number;
+    request?: Uint8Array;
+    response: Uint8Array;
+  },
+): void {
+  if (!file) return;
+  const line = {
+    time: new Date().toISOString(),
+    path: entry.path,
+    status: entry.status,
+    request: entry.request
+      ? Buffer.from(entry.request).toString('utf8').slice(0, 20000)
+      : undefined,
+    response: Buffer.from(entry.response).toString('utf8').slice(0, 4000),
+  };
+  appendFileSync(file, `${JSON.stringify(line)}\n`);
+}
+
 export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
   const upstream = options.upstream ?? DEFAULT_UPSTREAM;
   const upstreamTimeoutMs =
@@ -171,6 +197,12 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
       );
       const payload = Buffer.from(await upstreamRes.arrayBuffer());
       stopTimer();
+      logExchange(options.logFile, {
+        path: url.pathname,
+        status: upstreamRes.status,
+        request: body,
+        response: payload,
+      });
       res.writeHead(
         upstreamRes.status,
         Object.fromEntries(

@@ -45,6 +45,10 @@ interface Trial {
   pass: boolean;
   error?: string;
   isInfrastructureError?: boolean;
+  mcpHostTrace?: {
+    calls: { name: string; status: string }[];
+    missed: { name: string }[];
+  };
   expectations?: { judge?: JudgeOutcome };
 }
 
@@ -79,6 +83,24 @@ function isOutage(trial: Trial): boolean {
     (trial.error !== undefined && OUTAGE_PATTERN.test(trial.error)) ||
     judgeOutage(trial)
   );
+}
+
+// Playwright prints only the failed assertion, so the message carries each
+// distinct trial error and the tools the model called or missed.
+function failureSummary(trials: Trial[]): string {
+  const failed = trials.filter((t) => !t.pass);
+  if (failed.length === 0) return 'case below accuracy threshold';
+  const errors = new Map<string, number>();
+  for (const t of failed) {
+    const key = (t.error ?? 'assertion failed').slice(0, 300);
+    errors.set(key, (errors.get(key) ?? 0) + 1);
+  }
+  const first = failed.find((t) => t.mcpHostTrace)?.mcpHostTrace;
+  const trace = first
+    ? `\nfirst failing trace: calls [${first.calls.map((c) => `${c.name}:${c.status}`).join(', ')}], missed [${first.missed.map((m) => m.name).join(', ')}]`
+    : '';
+  const lines = [...errors].map(([msg, n]) => `  ${n}x ${msg}`);
+  return `${failed.length}/${trials.length} trials failed:\n${lines.join('\n')}${trace}`;
 }
 
 function trialRate(outcome: CaseOutcome): number {
@@ -201,6 +223,6 @@ for (const { id } of buildEvalDataset(placeholder).cases) {
     // Infrastructure errors are excluded from the pass rate, so mostly-outage
     // runs could otherwise pass on a single trial.
     expect(outageCount, 'infrastructure errors in this case').toBe(0);
-    expect(result.failed).toBe(0);
+    expect(result.failed, failureSummary(trials)).toBe(0);
   });
 }

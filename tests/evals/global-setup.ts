@@ -20,7 +20,11 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   try {
     if (routeToGo && apiKey) {
       const clientToken = randomBytes(24).toString('hex');
-      proxy = await startGoProxy({ apiKey, clientToken });
+      proxy = await startGoProxy({
+        apiKey,
+        clientToken,
+        logFile: process.env.MCP_EVAL_PROXY_LOG,
+      });
       process.env.OPENAI_BASE_URL = proxy.baseUrl;
       process.env.OPENAI_API_KEY = clientToken;
     }
