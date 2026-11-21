@@ -22,7 +22,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
     },
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server: serverId }) => {
@@ -41,7 +41,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       limit: z
         .number()
         .int()
@@ -107,7 +107,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
     },
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
@@ -127,7 +127,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
     },
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
@@ -147,7 +147,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
       limit: z
         .number()
@@ -190,7 +190,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
       from: z.string().optional().describe('Starting turn id.'),
       to: z.string().optional().describe('Ending turn id.'),
@@ -277,7 +277,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       directory: z
         .string()
         .min(1)
@@ -327,7 +327,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
       prompt: z.string().min(1).describe('Prompt text to send.'),
       allowed: z
@@ -359,7 +359,7 @@ export function createMcpServer(service: PeerService): McpServer {
       server: z
         .string()
         .min(1)
-        .describe('Configured server id (e.g. alpha, beta).'),
+        .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
       allowed: z
         .boolean()
