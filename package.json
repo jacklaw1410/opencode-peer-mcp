@@ -16,7 +16,8 @@
     "test": "OPENCODE_PEER_MCP_SKIP_FIXTURES=1 bun test tests/*.test.ts",
     "dev": "bun --hot src/index.ts",
     "start": "node dist/index.js",
-    "test:integration": "bun run build && bun test tests/integration"
+    "test:integration": "bun run build && bun test tests/integration",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
