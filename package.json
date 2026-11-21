@@ -17,6 +17,7 @@
     "dev": "bun --hot src/index.ts",
     "start": "node dist/index.js",
     "test:integration": "bun run build && bun test --path-ignore-patterns \"\" --preload ./tests/integration/preload.ts tests/integration",
+    "test:evals": "bun run build && playwright test --config tests/evals/playwright.config.ts",
     "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "dependencies": {
@@ -25,10 +26,16 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@ai-sdk/anthropic": "^3.0.46",
+    "@ai-sdk/deepseek": "^2.0.0",
+    "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.31",
     "@gleanwork/mcp-server-tester": "^1.1.1",
     "@playwright/test": "^1.65.1",
     "@types/bun": "^1.4.5",
     "@types/node": "^22.10.0",
-    "@typescript/native": "npm:typescript@^7.0.2"
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "ai": "^6.0.0",
+    "openai": "^7.62.0"
   }
 }

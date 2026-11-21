@@ -1,3 +1,9 @@
 node_modules/
 dist/
 test-results/
+
+# Eval results; per-case baselines are committed
+.mcp-test-results/*
+!.mcp-test-results/baseline/
+
+.kiro/agents/opencode-*.json
