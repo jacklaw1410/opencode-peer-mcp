@@ -219,12 +219,14 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'sessions_search',
-    'Search sessions across configured servers. Returns matching sessions; does not fetch messages or status for each.',
+    'Search sessions across configured servers. Returns matching sessions with their ids and titles; no follow-up calls needed. Omit the servers parameter to search all configured servers; do not call servers_list first.',
     {
       servers: z
         .array(z.string().min(1))
         .optional()
-        .describe('Server ids to search; omit for all.'),
+        .describe(
+          'Server ids to search. Omit to search all configured servers.',
+        ),
       query: z.string().min(1).describe('Search query.'),
       limit: z
         .number()

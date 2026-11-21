@@ -215,7 +215,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       description: 'Search across servers.',
       mode: 'mcp_host',
       scenario:
-        "Search all configured servers for sessions about 'peer-mcp-fixture'.",
+        "Search all configured servers for sessions about 'peer-mcp-fixture'. Report the matching session ids only; do not fetch messages or status for each, and do not list servers first.",
       mcpHostConfig: hostConfig,
       expect: {
         toolsTriggered: {
@@ -341,7 +341,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       description: 'Search and filter sessions by topic and recency.',
       mode: 'mcp_host',
       scenario:
-        "Find sessions related to 'peer-mcp-fixture' across configured servers, then identify which ones were updated in the last 10 hours. Report their ids.",
+        "Find sessions related to 'peer-mcp-fixture' across configured servers, then identify which ones were updated in the last 10 hours. Report their ids. Do not list servers first; search all configured servers directly.",
       mcpHostConfig: hostConfig,
       canonicalAnswer: `Both fixture sessions match 'peer-mcp-fixture'. They were created at the start of this run, so both were updated in the last 10 hours: ${alpha} on alpha and ${beta} on beta.`,
       expect: {
