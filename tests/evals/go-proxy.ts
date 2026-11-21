@@ -7,6 +7,12 @@ import {
   type Server,
   type ServerResponse,
 } from 'node:http';
+import {
+  chatToResponses,
+  responsesToChat,
+  type ItemStore,
+  type JsonObject,
+} from './responses-translate.js';
 
 export interface GoProxy {
   baseUrl: string;
@@ -140,6 +146,7 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
     options.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS;
   const sessionId = `ses_${randomUUID()}`;
   const expectedAuth = `Bearer ${options.clientToken}`;
+  const items: ItemStore = new Map();
 
   async function forward(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
@@ -189,11 +196,41 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
       }
     }
 
+    const translate = url.pathname === '/v1/responses';
+    let upstreamPath = url.pathname.slice('/v1'.length);
+    let upstreamBody = body;
+    if (translate) {
+      if (req.method !== 'POST' || !body) {
+        sendText(res, 405, 'only POST /v1/responses is supported');
+        return;
+      }
+      try {
+        const chat = responsesToChat(
+          JSON.parse(Buffer.from(body).toString('utf8')) as JsonObject,
+          items,
+        );
+        upstreamPath = '/chat/completions';
+        upstreamBody = new Uint8Array(Buffer.from(JSON.stringify(chat)));
+      } catch (error) {
+        sendText(
+          res,
+          400,
+          error instanceof Error ? error.message : 'invalid request',
+        );
+        return;
+      }
+    }
+
     startTimer();
     try {
       const upstreamRes = await fetch(
-        `${upstream}${url.pathname.slice('/v1'.length)}${url.search}`,
-        { method: req.method, headers, body, signal: controller.signal },
+        `${upstream}${upstreamPath}${url.search}`,
+        {
+          method: req.method,
+          headers,
+          body: upstreamBody,
+          signal: controller.signal,
+        },
       );
       const payload = Buffer.from(await upstreamRes.arrayBuffer());
       stopTimer();
@@ -203,6 +240,17 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
         request: body,
         response: payload,
       });
+      const outPayload =
+        translate && upstreamRes.ok
+          ? Buffer.from(
+              JSON.stringify(
+                chatToResponses(
+                  JSON.parse(payload.toString('utf8')) as JsonObject,
+                  items,
+                ),
+              ),
+            )
+          : payload;
       res.writeHead(
         upstreamRes.status,
         Object.fromEntries(
@@ -212,7 +260,7 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
           ).entries(),
         ),
       );
-      res.end(payload);
+      res.end(outPayload);
     } catch (error) {
       stopTimer();
       if (timedOut) {
