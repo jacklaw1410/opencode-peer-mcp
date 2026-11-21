@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { callTool, connectClient, toolText } from './client.js';
-import { SERVERS } from './fixtures.js';
+import { ROOT, SERVERS } from './fixtures.js';
 
 let client: Client;
 beforeAll(async () => {
@@ -55,4 +55,32 @@ test('server_get returns the details of alpha and beta', async () => {
     url: `http://127.0.0.1:${SERVERS.beta.port}`,
     auth: 'basic',
   });
+});
+
+test('session_create with model uses that model', async () => {
+  const result = await callTool(client, 'session_create', {
+    server: 'alpha',
+    directory: `${ROOT}/work`,
+    title: 'model-session',
+    model: { providerID: 'fixture', id: 'fixture-model' },
+  });
+  expect(result.isError).not.toBe(true);
+  const parsed = JSON.parse(toolText(result)) as {
+    data?: { model?: { providerID: string; id: string } };
+  };
+  expect(parsed.data?.model).toMatchObject({
+    providerID: 'fixture',
+    id: 'fixture-model',
+  });
+});
+
+test('session_create without model keeps server default', async () => {
+  const result = await callTool(client, 'session_create', {
+    server: 'alpha',
+    directory: `${ROOT}/work`,
+    title: 'default-model-session',
+  });
+  expect(result.isError).not.toBe(true);
+  const parsed = JSON.parse(toolText(result)) as { data?: { model?: unknown } };
+  expect(parsed.data?.model).toBeUndefined();
 });
