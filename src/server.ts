@@ -210,7 +210,13 @@ export function createMcpServer(service: PeerService): McpServer {
       directory: z.string().min(1),
       title: z.string().optional(),
       agent: z.string().optional(),
-      model: z.string().optional(),
+      model: z
+        .object({
+          providerID: z.string().min(1),
+          id: z.string().min(1),
+          variant: z.string().optional(),
+        })
+        .optional(),
       allowed: z.boolean().optional(),
     },
     async ({ server, directory, title, agent, model, allowed }) => {

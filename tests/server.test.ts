@@ -64,3 +64,53 @@ describe('createMcpServer', () => {
     await server.close();
   });
 });
+
+describe('session_create model parameter', () => {
+  it('accepts a Model.Ref object and rejects a bare string', async () => {
+    const service = {
+      createSession: mock(() => ({ data: { id: 'created' } })),
+    };
+    const server = createMcpServer(service as never);
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+
+    const client = new Client(
+      { name: 'test', version: '1.0.0' },
+      { capabilities: {} },
+    );
+    await client.connect(clientTransport);
+
+    const ok = await client.callTool({
+      name: 'session_create',
+      arguments: {
+        server: 'local',
+        directory: '/tmp/work',
+        model: { providerID: 'fixture', id: 'fixture-model' },
+      },
+    });
+    expect(ok.isError).not.toBe(true);
+
+    const bad = await client.callTool({
+      name: 'session_create',
+      arguments: {
+        server: 'local',
+        directory: '/tmp/work',
+        model: 'fixture/fixture-model',
+      },
+    });
+    expect(bad.isError).toBe(true);
+
+    const none = await client.callTool({
+      name: 'session_create',
+      arguments: {
+        server: 'local',
+        directory: '/tmp/work',
+      },
+    });
+    expect(none.isError).not.toBe(true);
+
+    await client.close();
+    await server.close();
+  });
+});
