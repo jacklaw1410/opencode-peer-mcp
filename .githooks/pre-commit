@@ -4,3 +4,4 @@ set -e
 bun fmt --staged
 bun lint --staged --fix
 bun check
+bun check -p tsconfig.tests.json
