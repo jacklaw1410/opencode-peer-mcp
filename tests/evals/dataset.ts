@@ -354,7 +354,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
         },
         passesJudge: judge('correctness'),
       },
-      judgeReps: 3,
+      judgeReps: Number(process.env.MCP_EVAL_JUDGE_REPS ?? 3),
       accuracyThreshold: 0.8,
     },
     {
@@ -370,7 +370,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
         },
         passesJudge: judge('completeness'),
       },
-      judgeReps: 3,
+      judgeReps: Number(process.env.MCP_EVAL_JUDGE_REPS ?? 3),
       accuracyThreshold: 0.8,
     },
     {
