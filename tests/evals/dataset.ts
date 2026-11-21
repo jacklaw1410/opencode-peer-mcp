@@ -361,7 +361,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       id: 'compare_sessions_summary',
       description: 'Compare sessions and summarize differences.',
       mode: 'mcp_host',
-      scenario: `Use the sessions_compare tool to compare session ${alpha} on 'alpha' with session ${beta} on 'beta', then summarize the differences in title and activity.`,
+      scenario: `Compare session ${alpha} on 'alpha' with session ${beta} on 'beta', then summarize the differences in title and activity.`,
       mcpHostConfig: hostConfig,
       canonicalAnswer: `Both sessions have the title 'peer-mcp-fixture', so their titles are identical. Both were created during this run.`,
       expect: {
