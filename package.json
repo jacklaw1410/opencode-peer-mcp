@@ -13,10 +13,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "bun test tests/*.test.ts",
+    "test": "OPENCODE_PEER_MCP_SKIP_FIXTURES=1 bun test tests/*.test.ts",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "test:integration": "bun run build && playwright test --config tests/integration/playwright.config.ts"
+    "test:integration": "bun run build && bun test tests/integration"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -25,8 +25,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@gleanwork/mcp-server-tester": "^1.1.1",
-    "@playwright/test": "^1.65.1",
     "@types/bun": "^1.4.5",
     "@types/node": "^22.10.0",
     "@typescript/native": "npm:typescript@^7.0.2",

@@ -1,20 +1,31 @@
-import { test, expect } from '@gleanwork/mcp-server-tester/fixtures/mcp';
+import { afterAll, beforeAll, expect, test } from 'bun:test';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { callTool, connectClient, toolText } from './client.js';
+import { ROOT } from './fixtures.js';
 
-test('permission denies session creation by default', async ({ mcp }) => {
-  const result = await mcp.callTool('session_create', {
-    server: 'beta',
-    directory: '/tmp/opencode-peer-mcp-integration/work',
-    title: 'should-not-be-created',
-  });
-  expect(result).toBeToolError();
-  expect(result).toContainToolText('Write denied');
+let client: Client;
+beforeAll(async () => {
+  client = await connectClient();
+});
+afterAll(async () => {
+  await client.close();
 });
 
-test('permission allows an allowlisted session', async ({ mcp }) => {
-  const result = await mcp.callTool('session_create', {
+test('permission denies session creation by default', async () => {
+  const result = await callTool(client, 'session_create', {
+    server: 'beta',
+    directory: `${ROOT}/work`,
+    title: 'should-not-be-created',
+  });
+  expect(result.isError).toBe(true);
+  expect(toolText(result)).toContain('Write denied');
+});
+
+test('permission allows an allowlisted session', async () => {
+  const result = await callTool(client, 'session_create', {
     server: 'alpha',
-    directory: '/tmp/opencode-peer-mcp-integration/work',
+    directory: `${ROOT}/work`,
     title: 'allowed-write-fixture',
   });
-  expect(result).not.toBeToolError();
+  expect(result.isError).not.toBe(true);
 });
