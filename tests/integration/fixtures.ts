@@ -1,9 +1,11 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createWriteStream, readFileSync, rmSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
+import type { Server } from 'node:http';
 import { connect } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
+import { startFixtureModel, stopFixtureModel } from './fixture-model.js';
 
 export const ROOT = path.resolve(
   process.env.OPENCODE_PEER_MCP_INTEGRATION_ROOT ??
@@ -24,10 +26,33 @@ export const SERVERS = {
   },
 } as const;
 
+export const MODEL_PORT = 49423;
+const MODEL_PROVIDER = 'fixture';
+const MODEL_ID = 'fixture-model';
+
 type Session = { port: number; password: string; id: string };
-type Running = { pids: number[]; sessions: Session[] };
+type Running = { pids: number[]; sessions: Session[]; model?: Server };
 
 let running: Running | undefined;
+
+function fixtureConfig(): string {
+  return JSON.stringify(
+    {
+      $schema: 'https://opencode.ai/config.json',
+      model: `${MODEL_PROVIDER}/${MODEL_ID}`,
+      providers: {
+        [MODEL_PROVIDER]: {
+          name: 'Fixture',
+          package: '@opencode/ai/providers/openai-compatible',
+          settings: { baseURL: `http://127.0.0.1:${MODEL_PORT}/v1` },
+          models: { [MODEL_ID]: { name: 'Fixture model' } },
+        },
+      },
+    },
+    null,
+    2,
+  );
+}
 
 function basicAuth(password: string): string {
   return `Basic ${Buffer.from(`opencode:${password}`).toString('base64')}`;
@@ -63,9 +88,11 @@ function isPortOpen(port: number): Promise<boolean> {
 async function waitForPortsClosed(timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const open = await Promise.all(
-      Object.values(SERVERS).map((server) => isPortOpen(server.port)),
-    );
+    const ports = [
+      ...Object.values(SERVERS).map((server) => server.port),
+      MODEL_PORT,
+    ];
+    const open = await Promise.all(ports.map((port) => isPortOpen(port)));
     if (!open.some(Boolean)) return true;
     await sleep(200);
   }
@@ -123,17 +150,40 @@ export async function startFixtures(): Promise<void> {
   for (const server of Object.values(SERVERS)) {
     await assertPortFree(server.port);
   }
+  await assertPortFree(MODEL_PORT);
 
   await rm(ROOT, { recursive: true, force: true });
   await mkdir(`${ROOT}/work`, { recursive: true });
+  execFileSync('git', ['init', '-q'], { cwd: `${ROOT}/work` });
+  execFileSync(
+    'git',
+    [
+      '-c',
+      'user.email=fixture@localhost',
+      '-c',
+      'user.name=fixture',
+      'commit',
+      '-q',
+      '--allow-empty',
+      '-m',
+      'fixture',
+    ],
+    { cwd: `${ROOT}/work` },
+  );
   for (const server of Object.values(SERVERS)) {
     await mkdir(`${ROOT}/data-${server.port}`, { recursive: true });
-    await mkdir(`${ROOT}/config-${server.port}`, { recursive: true });
+    await mkdir(`${ROOT}/config-${server.port}/opencode`, { recursive: true });
+    await writeFile(
+      `${ROOT}/config-${server.port}/opencode/opencode.json`,
+      fixtureConfig(),
+      'utf8',
+    );
   }
 
   const state: Running = { pids: [], sessions: [] };
   running = state;
   try {
+    state.model = await startFixtureModel(MODEL_PORT);
     for (const server of Object.values(SERVERS)) {
       const child = spawn(
         'opencode',
@@ -143,11 +193,15 @@ export async function startFixtures(): Promise<void> {
             PATH: process.env.PATH ?? '',
             HOME: process.env.HOME ?? '',
             OPENCODE_PASSWORD: server.password,
+            OPENCODE_DISABLE_MODELS_FETCH: '1',
+            OPENCODE_DISABLE_AUTOUPDATE: '1',
+            OPENCODE_DISABLE_FREE_MODELS: '1',
             XDG_DATA_HOME: `${ROOT}/data-${server.port}`,
             XDG_CONFIG_HOME: `${ROOT}/config-${server.port}`,
           },
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: true,
+          cwd: `${ROOT}/work`,
         },
       );
       child.unref();
@@ -240,6 +294,7 @@ export async function stopFixtures(): Promise<void> {
     }
   }
 
+  if (current.model) await stopFixtureModel(current.model);
   for (const pid of current.pids) signalGroup(pid, 'SIGTERM');
   if (!(await waitForPortsClosed(5000))) {
     for (const pid of current.pids) signalGroup(pid, 'SIGKILL');

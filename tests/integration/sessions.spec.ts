@@ -53,3 +53,33 @@ test('sessions_compare returns both sessions', async () => {
   expect(toolText(result)).toContain('alpha');
   expect(toolText(result)).toContain('beta');
 });
+
+test('session_status reports both fixture sessions as idle', async () => {
+  for (const [server, sessionId] of [
+    ['alpha', state.alphaSessionId],
+    ['beta', state.betaSessionId],
+  ] as const) {
+    const result = await callTool(client, 'session_status', {
+      server,
+      session_id: sessionId,
+    });
+    expect(result.isError).not.toBe(true);
+    expect(JSON.parse(toolText(result))).toMatchObject({ status: 'idle' });
+  }
+});
+
+test('session_messages and session_diff are empty on a fresh fixture session', async () => {
+  const messages = await callTool(client, 'session_messages', {
+    server: 'beta',
+    session_id: state.betaSessionId,
+  });
+  expect(messages.isError).not.toBe(true);
+  expect(JSON.parse(toolText(messages))).toMatchObject({ data: [] });
+
+  const diff = await callTool(client, 'session_diff', {
+    server: 'beta',
+    session_id: state.betaSessionId,
+  });
+  expect(diff.isError).not.toBe(true);
+  expect(JSON.parse(toolText(diff))).toEqual({ data: [] });
+});
