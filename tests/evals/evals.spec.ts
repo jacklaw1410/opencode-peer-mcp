@@ -10,7 +10,7 @@ import {
   MAX_UPSTREAM_ATTEMPTS,
 } from './go-proxy.js';
 
-const DEFAULT_ITERATIONS = 10;
+const DEFAULT_ITERATIONS = Number(process.env.MCP_EVAL_ITERATIONS ?? 10);
 // Assumed time for one model turn with tool calls. Unverified against a live run.
 const MS_PER_ITERATION = 60_000;
 // Room for one stalled upstream call, which the AI SDK retries up to

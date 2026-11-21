@@ -39,6 +39,7 @@ Environment variables:
 | `OPENCODE_GO_API_KEY`                               | none                                          | OpenCode Go key, required when routing through the proxy                                   |
 | `MCP_EVAL_PROVIDER`                                 | `openai`                                      | Host model provider. `openai` routes through the Go proxy unless `OPENAI_BASE_URL` is set  |
 | `MCP_EVAL_MODEL`                                    | `deepseek-v4.1-flash` for `openai`, else none | Host model. Required when `MCP_EVAL_PROVIDER` is `deepseek`, `anthropic`, or `google`      |
+| `MCP_EVAL_ITERATIONS`                               | 10                                            | Number of trials per read case. Write cases always use 1.                                  |
 | `MCP_EVAL_JUDGE_PROVIDER`                           | host provider if judge-capable, else `openai` | `openai`, `anthropic`, or `google`                                                         |
 | `MCP_EVAL_JUDGE_MODEL`                              | host model if providers match, else none      | Judge model. Required when the judge provider differs from the host provider               |
 | `MCP_EVAL_JUDGE_REPS`                               | 1                                             | Number of judge calls averaged per trial. 3 reduces variance.                              |

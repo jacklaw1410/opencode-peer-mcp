@@ -341,7 +341,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       description: 'Search and filter sessions by topic and recency.',
       mode: 'mcp_host',
       scenario:
-        "Use the sessions_search tool to find sessions about 'peer-mcp-fixture' on all configured servers. Report their ids.",
+        "Find sessions related to 'peer-mcp-fixture' across configured servers, then identify which ones were updated in the last 10 hours. Report their ids.",
       mcpHostConfig: hostConfig,
       canonicalAnswer: `Both fixture sessions match 'peer-mcp-fixture'. They were created at the start of this run, so both were updated in the last 10 hours: ${alpha} on alpha and ${beta} on beta.`,
       expect: {
