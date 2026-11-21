@@ -41,3 +41,18 @@ export function toolText(result: CallToolResult): string {
     .flatMap((part) => (part.type === 'text' ? [part.text] : []))
     .join('\n');
 }
+
+export async function pollTool(
+  client: Client,
+  name: string,
+  args: Record<string, unknown>,
+  done: (text: string) => boolean,
+  timeoutMs = 15000,
+): Promise<CallToolResult> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const result = await callTool(client, name, args);
+    if (done(toolText(result)) || Date.now() >= deadline) return result;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}

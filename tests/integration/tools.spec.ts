@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { callTool, connectClient, toolText } from './client.js';
+import { SERVERS } from './fixtures.js';
 
 let client: Client;
 beforeAll(async () => {
@@ -36,4 +37,22 @@ test('servers_list returns configured servers', async () => {
   expect(result.isError).not.toBe(true);
   const parsed = JSON.parse(toolText(result)) as Array<{ id: string }>;
   expect(parsed.map((server) => server.id)).toEqual(['alpha', 'beta']);
+});
+
+test('server_get returns the details of alpha and beta', async () => {
+  const alpha = await callTool(client, 'server_get', { server: 'alpha' });
+  expect(alpha.isError).not.toBe(true);
+  expect(JSON.parse(toolText(alpha))).toMatchObject({
+    id: 'alpha',
+    url: `http://127.0.0.1:${SERVERS.alpha.port}`,
+    auth: 'basic',
+  });
+
+  const beta = await callTool(client, 'server_get', { server: 'beta' });
+  expect(beta.isError).not.toBe(true);
+  expect(JSON.parse(toolText(beta))).toMatchObject({
+    id: 'beta',
+    url: `http://127.0.0.1:${SERVERS.beta.port}`,
+    auth: 'basic',
+  });
 });
