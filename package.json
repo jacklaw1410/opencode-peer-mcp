@@ -9,12 +9,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "typecheck": "bun check && bun check -p tsconfig.tests.json",
+    "lint": "bun lint",
+    "format": "bun fmt",
+    "format:check": "bun fmt --check",
     "test": "OPENCODE_PEER_MCP_SKIP_FIXTURES=1 bun test tests/*.test.ts",
-    "dev": "tsx src/index.ts",
+    "dev": "bun --hot src/index.ts",
     "start": "node dist/index.js",
     "test:integration": "bun run build && bun test tests/integration"
   },
@@ -24,14 +24,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
     "@types/bun": "^1.4.5",
     "@types/node": "^22.10.0",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "eslint": "^9.0.0",
-    "prettier": "^3.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "typescript-eslint": "^8.0.0"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
