@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import { evaluatePermission } from '../src/permission.js';
 
 describe('evaluatePermission', () => {

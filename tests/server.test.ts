@@ -1,12 +1,12 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, mock } from 'bun:test';
 import { createMcpServer } from '../src/server.js';
 
 describe('createMcpServer', () => {
   it('registers the bootstrap tools and serves servers_list', async () => {
     const service = {
-      listServers: vi.fn(() => [
+      listServers: mock(() => [
         {
           id: 'local',
           url: 'http://example.test',
@@ -15,9 +15,9 @@ describe('createMcpServer', () => {
           allowlist: [],
         },
       ]),
-      listSessions: vi.fn(),
-      getSession: vi.fn(),
-      getServer: vi.fn(() => ({
+      listSessions: mock(),
+      getSession: mock(),
+      getServer: mock(() => ({
         id: 'local',
         url: 'http://example.test',
         auth: 'none',

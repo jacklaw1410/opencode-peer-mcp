@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, mock } from 'bun:test';
 import { PeerService } from '../src/service.js';
 import type { ResolvedServer } from '../src/types.js';
 
@@ -14,7 +14,7 @@ const servers: ResolvedServer[] = [
 
 describe('PeerService', () => {
   it('lists servers without exposing secrets', () => {
-    const http = { request: vi.fn() };
+    const http = { request: mock() };
     const service = new PeerService({ servers, http: http as never });
     expect(service.listServers()).toEqual([
       {
@@ -28,7 +28,7 @@ describe('PeerService', () => {
   });
 
   it('throws for an unknown server', async () => {
-    const http = { request: vi.fn() };
+    const http = { request: mock() };
     const service = new PeerService({ servers, http: http as never });
     await expect(service.listSessions('missing')).rejects.toThrow(
       /Unknown server/,
@@ -36,7 +36,7 @@ describe('PeerService', () => {
   });
 
   it('clamps session list limit and passes directory', async () => {
-    const http = { request: vi.fn(async () => ({ ok: true })) };
+    const http = { request: mock(async () => ({ ok: true })) };
     const service = new PeerService({ servers, http: http as never });
     await service.listSessions('local', { limit: 500, directory: '/tmp' });
     expect(http.request).toHaveBeenCalledWith(servers[0], '/api/session', {
@@ -45,7 +45,7 @@ describe('PeerService', () => {
   });
 
   it('encodes session IDs when fetching a session', async () => {
-    const http = { request: vi.fn(async () => ({ ok: true })) };
+    const http = { request: mock(async () => ({ ok: true })) };
     const service = new PeerService({ servers, http: http as never });
     await service.getSession('local', 'a/b');
     expect(http.request).toHaveBeenCalledWith(servers[0], '/api/session/a%2Fb');
@@ -53,7 +53,7 @@ describe('PeerService', () => {
 
   it('derives session status from timing', async () => {
     const http = {
-      request: vi.fn(async () => ({ data: { time: { busy: 10, idle: 5 } } })),
+      request: mock(async () => ({ data: { time: { busy: 10, idle: 5 } } })),
     };
     const service = new PeerService({ servers, http: http as never });
     await expect(
@@ -62,7 +62,7 @@ describe('PeerService', () => {
   });
 
   it('passes message filters', async () => {
-    const http = { request: vi.fn(async () => ({ data: [] })) };
+    const http = { request: mock(async () => ({ data: [] })) };
     const service = new PeerService({ servers, http: http as never });
     await service.getSessionMessages('local', 'session-1', {
       limit: 10,
@@ -79,7 +79,7 @@ describe('PeerService', () => {
   });
 
   it('passes diff options', async () => {
-    const http = { request: vi.fn(async () => ({ data: [] })) };
+    const http = { request: mock(async () => ({ data: [] })) };
     const service = new PeerService({ servers, http: http as never });
     await service.getSessionDiff('local', 'session-1', {
       from: 'm1',
@@ -96,14 +96,14 @@ describe('PeerService', () => {
   });
 
   it('searches selected servers', async () => {
-    const http = { request: vi.fn(async () => ({ data: [{ id: 's1' }] })) };
+    const http = { request: mock(async () => ({ data: [{ id: 's1' }] })) };
     const service = new PeerService({ servers, http: http as never });
     const result = await service.searchSessions(['local'], 'foo', 5);
     expect(result).toEqual([{ server: 'local', session: { id: 's1' } }]);
   });
 
   it('compares two sessions', async () => {
-    const http = { request: vi.fn(async () => ({ data: { id: 's1' } })) };
+    const http = { request: mock(async () => ({ data: { id: 's1' } })) };
     const service = new PeerService({ servers, http: http as never });
     const result = (await service.compareSessions(
       'local',
@@ -118,8 +118,8 @@ describe('PeerService', () => {
 
 describe('PeerService writes', () => {
   it('denies writes when the gate is closed', async () => {
-    const http = { request: vi.fn() };
-    const logger = { log: vi.fn(async () => undefined) };
+    const http = { request: mock() };
+    const logger = { log: mock(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,
@@ -134,8 +134,8 @@ describe('PeerService writes', () => {
   });
 
   it('allows writes when enabled and allowlisted', async () => {
-    const http = { request: vi.fn(async () => ({ ok: true })) };
-    const logger = { log: vi.fn(async () => undefined) };
+    const http = { request: mock(async () => ({ ok: true })) };
+    const logger = { log: mock(async () => undefined) };
     const service = new PeerService({
       servers,
       http: http as never,

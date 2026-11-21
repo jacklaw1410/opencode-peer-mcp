@@ -47,6 +47,7 @@ export async function loadConfig(
   } catch (error) {
     throw new Error(
       `Invalid YAML in ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
     );
   }
   const config = ConfigSchema.parse(parsed ?? {});

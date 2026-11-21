@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun --revision
       - name: Install OpenCode
         run: |
           curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.3.2
@@ -22,12 +25,6 @@ jobs:
       - run: bun run format:check
       - run: bun run test
       - run: bun run build
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-playwright-
-      - run: bunx playwright install --with-deps
       - run: bun run test:integration
         env:
           OPENCODE_PASSWORD: testpass
