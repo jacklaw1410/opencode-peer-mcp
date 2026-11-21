@@ -110,7 +110,7 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'session_messages',
-    'Get messages for a session.',
+    'Get messages for a session. Returns only the message list; does not fetch session details or status.',
     {
       server: z.string().min(1),
       session_id: z.string().min(1),
@@ -137,7 +137,7 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'session_diff',
-    'Get structured diffs for a session turn.',
+    'Get structured diffs for a session turn. Returns only the diff; does not fetch messages or session details.',
     {
       server: z.string().min(1),
       session_id: z.string().min(1),
@@ -162,7 +162,7 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'sessions_search',
-    'Search sessions across configured servers.',
+    'Search sessions across configured servers. Returns matching sessions; does not fetch messages or status for each.',
     {
       servers: z.array(z.string().min(1)).optional(),
       query: z.string().min(1),
@@ -179,7 +179,7 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'sessions_compare',
-    'Compare two sessions across configured servers.',
+    'Compare two sessions across configured servers. Returns both sessions side by side; does not fetch messages or diffs.',
     {
       server_a: z.string().min(1),
       session_a: z.string().min(1),

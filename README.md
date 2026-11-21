@@ -41,6 +41,7 @@ Environment variables:
 | `MCP_EVAL_MODEL`                                    | `deepseek-v4.1-flash` for `openai`, else none | Host model. Required when `MCP_EVAL_PROVIDER` is `deepseek`, `anthropic`, or `google`      |
 | `MCP_EVAL_JUDGE_PROVIDER`                           | host provider if judge-capable, else `openai` | `openai`, `anthropic`, or `google`                                                         |
 | `MCP_EVAL_JUDGE_MODEL`                              | host model if providers match, else none      | Judge model. Required when the judge provider differs from the host provider               |
+| `MCP_EVAL_JUDGE_REPS`                               | 1                                             | Number of judge calls averaged per trial. 3 reduces variance.                              |
 | `MCP_EVAL_JUDGE_API_KEY_ENV`                        | provider key name                             | Env var that holds the judge key. Ignored for `openai`, which always uses `OPENAI_API_KEY` |
 | `OPENAI_BASE_URL`                                   | unset                                         | Skips the Go proxy and sends OpenAI requests to this endpoint                              |
 | `OPENCODE_PEER_MCP_EVAL_ROOT`                       | `/tmp/opencode-peer-mcp-evals`                | Eval fixture directory                                                                     |

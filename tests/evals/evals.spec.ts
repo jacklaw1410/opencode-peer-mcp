@@ -177,7 +177,7 @@ for (const { id } of buildEvalDataset(placeholder).cases) {
       {
         dataset: { ...dataset, cases: [evalCase] },
         defaultLlmIterations: DEFAULT_ITERATIONS,
-        defaultJudgeReps: 1,
+        defaultJudgeReps: Number(process.env.MCP_EVAL_JUDGE_REPS ?? 1),
         saveResultsTo: resultFile,
         ...(compareBaseline ? { baselineResultsFrom: baselineFile(id) } : {}),
       },
