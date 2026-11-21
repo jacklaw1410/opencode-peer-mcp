@@ -28,8 +28,13 @@ export const INTEGRATION_LAYOUT: FixtureLayout = {
 
 export const ROOT = INTEGRATION_LAYOUT.root;
 
+// Default roots live under /tmp. TMPDIR can point elsewhere (for example
+// /tmp/opencode), so both locations count as safe.
+const SAFE_BASES = [...new Set([path.resolve(os.tmpdir()), '/tmp'])];
+
 function assertSafeRoot(root: string): void {
-  if (!root.startsWith(`${path.resolve(os.tmpdir())}${path.sep}`)) {
+  const resolved = path.resolve(root);
+  if (!SAFE_BASES.some((base) => resolved.startsWith(`${base}${path.sep}`))) {
     throw new Error(`Unsafe fixture root: ${root}`);
   }
 }
