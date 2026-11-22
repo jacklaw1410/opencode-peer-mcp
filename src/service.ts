@@ -124,7 +124,7 @@ export class PeerService {
     prompt: string,
     delay: string,
     options: WriteOptions = {},
-  ): Promise<unknown> {
+  ): Promise<{ scheduled: boolean; fires_at: string; delay_ms: number }> {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -336,7 +336,15 @@ export class PeerService {
     sessionId: string,
     prompt: string,
     options: WriteOptions = {},
-  ): Promise<unknown> {
+  ): Promise<
+    | {
+        prompt: unknown;
+        awaited: boolean;
+        timed_out?: boolean;
+        message?: unknown;
+      }
+    | unknown
+  > {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -510,8 +518,12 @@ function parseDelay(input: string): number {
   if (!isNaN(parsed)) {
     const delay = parsed - Date.now();
     const clamped = delay < 0 ? 0 : delay;
-    if (clamped > 60 * 60 * 1000 || clamped < 1000)
-      throw new Error(`Invalid delay: ${input}`);
+    if (clamped > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (clamped < 1000)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
     return clamped;
   }
   const cleaned = input.replace(/^in\s+/i, '').trim();
@@ -525,8 +537,12 @@ function parseDelay(input: string): number {
     if (unit.startsWith('s')) ms = n * 1000;
     else if (unit.startsWith('m')) ms = n * 60 * 1000;
     else if (unit.startsWith('h')) ms = n * 60 * 60 * 1000;
-    if (ms > 60 * 60 * 1000 || ms < 1000)
-      throw new Error(`Invalid delay: ${input}`);
+    if (ms > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (ms < 1000)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
     return ms;
   }
   const parts = cleaned.match(/(\d+)\s*(h|m|s)/gi);
@@ -542,10 +558,15 @@ function parseDelay(input: string): number {
         else if (u === 's') total += n * 1000;
       }
     }
-    if (total > 60 * 60 * 1000 || total < 1000)
-      throw new Error(`Invalid delay: ${input}`);
-    if (total <= 0) throw new Error(`Invalid delay: ${input}`);
+    if (total > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (total < 1000 || total <= 0)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
     return total;
   }
-  throw new Error(`Invalid delay: ${input}`);
+  throw new Error(
+    `Cannot parse delay: ${input}. Use a duration like "30s", "5m", "1h" or an ISO timestamp like "2026-11-22T13:00:00".`,
+  );
 }

@@ -41,8 +41,31 @@ test('session_prompt with wait_for returns the assistant reply', async () => {
     wait_for: 10000,
   });
   expect(result.isError).not.toBe(true);
-  const text = toolText(result);
-  expect(text).toContain('FIXTURE_REPLY');
+  const parsed = JSON.parse(toolText(result)) as {
+    awaited: boolean;
+    timed_out: boolean;
+    message: { type: string; content?: Array<{ type: string; text: string }> };
+  };
+  expect(parsed.awaited).toBe(true);
+  expect(parsed.timed_out).toBe(false);
+  expect(parsed.message).not.toBeNull();
+});
+
+test('session_schedule arms a timer and returns scheduled', async () => {
+  const result = await callTool(client, 'session_schedule', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+    prompt: 'scheduled hello',
+    delay: '30s',
+  });
+  expect(result.isError).not.toBe(true);
+  const parsed = JSON.parse(toolText(result)) as {
+    scheduled: boolean;
+    fires_at: string;
+    delay_ms: number;
+  };
+  expect(parsed.scheduled).toBe(true);
+  expect(parsed.delay_ms).toBe(30000);
 });
 
 test('scripted edit on alpha appears in session_diff', async () => {

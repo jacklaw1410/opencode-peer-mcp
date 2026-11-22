@@ -150,7 +150,7 @@ describe('PeerService writes', () => {
   it('awaits remote response when wait_for is set', async () => {
     let callCount = 0;
     const http = {
-      request: mock(async (server: any, path: string) => {
+      request: mock(async (server: unknown, path: string) => {
         if (path.includes('/prompt')) return { data: { id: 'msg-1' } };
         if (path.includes('/message')) {
           return {
@@ -185,7 +185,7 @@ describe('PeerService writes', () => {
 
   it('returns timed_out when await exceeds timeout', async () => {
     const http = {
-      request: mock(async (server: any, path: string) => {
+      request: mock(async (server: unknown, path: string) => {
         if (path.includes('/prompt')) return { data: { id: 'msg-1' } };
         if (path.includes('/message')) return { data: [] };
         return { data: { time: { busy: 10, idle: 1 } } };
@@ -217,7 +217,7 @@ describe('PeerService writes', () => {
     const result = await service.promptSession('local', 'session-1', 'hello', {
       waitFor: null,
     });
-    expect((result as any).awaited).toBeUndefined();
+    expect((result as { awaited?: boolean }).awaited).toBeUndefined();
   });
 
   it('schedules a prompt with a relative delay', async () => {
@@ -271,7 +271,7 @@ describe('PeerService writes', () => {
     });
     await expect(
       service.schedulePrompt('local', 'session-1', 'hello', 'not-a-delay'),
-    ).rejects.toThrow(/Invalid delay/);
+    ).rejects.toThrow(/Cannot parse delay/);
   });
 
   it('rejects delay over 1 hour', async () => {
@@ -285,7 +285,7 @@ describe('PeerService writes', () => {
     });
     await expect(
       service.schedulePrompt('local', 'session-1', 'hello', '2h'),
-    ).rejects.toThrow(/Invalid delay/);
+    ).rejects.toThrow(/Delay exceeds 1 hour/);
   });
 
   it('denies schedule when gate is closed', async () => {
