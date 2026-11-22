@@ -76,21 +76,38 @@ test('session_prompt with wait_for times out on slow model', async () => {
   });
 });
 
-test('session_schedule arms a timer and returns scheduled', async () => {
+test('session_schedule sends the prompt only after the delay', async () => {
+  const marker = `scheduled marker ${Date.now()}`;
+  const startedAt = Date.now();
   const result = await callTool(client, 'session_schedule', {
     server: 'alpha',
     session_id: state.alphaSessionId,
-    prompt: 'scheduled hello',
-    delay: '30s',
+    prompt: marker,
+    delay: '3s',
   });
   expect(result.isError).not.toBe(true);
   const parsed = JSON.parse(toolText(result)) as {
     scheduled: boolean;
-    fires_at: string;
     delay_ms: number;
   };
   expect(parsed.scheduled).toBe(true);
-  expect(parsed.delay_ms).toBe(30000);
+  expect(parsed.delay_ms).toBe(3000);
+
+  const before = await callTool(client, 'session_messages', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+  });
+  expect(toolText(before)).not.toContain(marker);
+
+  const after = await pollTool(
+    client,
+    'session_messages',
+    { server: 'alpha', session_id: state.alphaSessionId },
+    (text) => text.includes(marker),
+    10000,
+  );
+  expect(toolText(after)).toContain(marker);
+  expect(Date.now() - startedAt).toBeGreaterThanOrEqual(3000);
 });
 
 test('scripted edit on alpha appears in session_diff', async () => {
