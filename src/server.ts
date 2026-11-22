@@ -332,6 +332,15 @@ export function createMcpServer(service: PeerService): McpServer {
         .describe('Configured server id (e.g. linux, window, mbp).'),
       session_id: z.string().min(1).describe('Session id on that server.'),
       prompt: z.string().min(1).describe('Prompt text to send.'),
+      wait_for: z
+        .number()
+        .int()
+        .min(1000)
+        .max(300000)
+        .optional()
+        .describe(
+          'Wait up to this many milliseconds for the remote session to complete, then return its response. Null/omitted returns immediately.',
+        ),
       allowed: z
         .boolean()
         .optional()
@@ -343,10 +352,13 @@ export function createMcpServer(service: PeerService): McpServer {
       idempotentHint: false,
       openWorldHint: false,
     },
-    async ({ server, session_id, prompt, allowed }) => {
+    async ({ server, session_id, prompt, wait_for, allowed }) => {
       try {
         return jsonResult(
-          await service.promptSession(server, session_id, prompt, { allowed }),
+          await service.promptSession(server, session_id, prompt, {
+            allowed,
+            waitFor: wait_for ?? null,
+          }),
         );
       } catch (error) {
         return errorResult(error);
@@ -378,6 +390,54 @@ export function createMcpServer(service: PeerService): McpServer {
       try {
         return jsonResult(
           await service.interruptSession(server, session_id, { allowed }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.tool(
+    'session_schedule',
+    'Schedule a message on a remote session after a delay. Fire-and-forget: does not survive server restart. For recurring checks, use OpenCode built-in automations.',
+    {
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
+      prompt: z
+        .string()
+        .min(1)
+        .describe('Prompt text to send when the timer fires.'),
+      delay: z
+        .string()
+        .min(1)
+        .describe(
+          'When to fire: a duration like "30s", "5m", "1h", "90s", "2m30s" or an ISO timestamp like "2026-11-22T13:00:00". Max 1 hour.',
+        ),
+      name: z.string().optional().describe('Short label for the schedule.'),
+      expires: z
+        .string()
+        .optional()
+        .describe('ISO timestamp after which the schedule is cancelled.'),
+      allowed: z
+        .boolean()
+        .optional()
+        .describe('Allow write operations (gated).'),
+    },
+    {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+    async ({ server, session_id, prompt, delay, name, expires, allowed }) => {
+      try {
+        return jsonResult(
+          await service.schedulePrompt(server, session_id, prompt, delay, {
+            allowed,
+          }),
         );
       } catch (error) {
         return errorResult(error);
