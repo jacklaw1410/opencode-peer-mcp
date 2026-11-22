@@ -149,17 +149,8 @@ export class PeerService {
     const fireIn = parseDelay(delay);
     if (fireIn === null) {
       throw new Error(
-        `Cannot parse delay: ${delay}. Use a duration like "30s", "5m", "1h" or an ISO timestamp like "2026-11-22T13:00:00".`,
+        `Cannot parse delay: ${delay}. Use a duration like "30s", "5m", "1h" or an ISO timestamp like "2026-11-22T13:00:00". Max 1 hour, min 1 second.`,
       );
-    }
-    const maxMs = 60 * 60 * 1000;
-    if (fireIn > maxMs) {
-      throw new Error(
-        'Delay exceeds 1 hour. Use OpenCode built-in automations for longer waits.',
-      );
-    }
-    if (fireIn < 1000) {
-      throw new Error('Delay must be at least 1 second.');
     }
 
     const fireAt = new Date(Date.now() + fireIn).toISOString();
@@ -523,7 +514,9 @@ function parseDelay(input: string): number | null {
   const parsed = Date.parse(input);
   if (!isNaN(parsed)) {
     const delay = parsed - Date.now();
-    return delay < 0 ? 0 : delay;
+    const clamped = delay < 0 ? 0 : delay;
+    if (clamped > 60 * 60 * 1000 || clamped < 1000) return null;
+    return clamped;
   }
   const cleaned = input.replace(/^in\s+/i, '').trim();
   const match = cleaned.match(
@@ -532,9 +525,12 @@ function parseDelay(input: string): number | null {
   if (match) {
     const n = parseInt(match[1], 10);
     const unit = match[2].toLowerCase();
-    if (unit.startsWith('s')) return n * 1000;
-    if (unit.startsWith('m')) return n * 60 * 1000;
-    if (unit.startsWith('h')) return n * 60 * 60 * 1000;
+    let ms = 0;
+    if (unit.startsWith('s')) ms = n * 1000;
+    else if (unit.startsWith('m')) ms = n * 60 * 1000;
+    else if (unit.startsWith('h')) ms = n * 60 * 60 * 1000;
+    if (ms > 60 * 60 * 1000 || ms < 1000) return null;
+    return ms;
   }
   const parts = cleaned.match(/(\d+)\s*(h|m|s)/gi);
   if (parts && parts.length > 1) {
@@ -549,6 +545,7 @@ function parseDelay(input: string): number | null {
         else if (u === 's') total += n * 1000;
       }
     }
+    if (total > 60 * 60 * 1000 || total < 1000) return null;
     return total > 0 ? total : null;
   }
   return null;

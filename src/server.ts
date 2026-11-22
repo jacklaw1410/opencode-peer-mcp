@@ -399,7 +399,7 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'session_schedule',
-    'Schedule a message on a remote session after a delay. Fire-and-forget: does not survive server restart. For recurring checks, use OpenCode built-in automations.',
+    'Schedule a message on a session after a delay. Fire-and-forget: does not survive server restart. For recurring checks, use OpenCode built-in automations.',
     {
       server: z
         .string()
