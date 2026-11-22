@@ -33,6 +33,18 @@ test('session_prompt on alpha returns the fixed reply in session_messages', asyn
   expect(toolText(messages)).toContain(FIXTURE_REPLY);
 });
 
+test('session_prompt with wait_for returns the assistant reply', async () => {
+  const result = await callTool(client, 'session_prompt', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+    prompt: 'hello await from fixture test',
+    wait_for: 10000,
+  });
+  expect(result.isError).not.toBe(true);
+  const text = toolText(result);
+  expect(text).toContain('FIXTURE_REPLY');
+});
+
 test('scripted edit on alpha appears in session_diff', async () => {
   const target = `${ROOT}/work/edited.txt`;
   const prompt = await callTool(client, 'session_prompt', {
