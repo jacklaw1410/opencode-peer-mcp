@@ -38,8 +38,6 @@ export interface SessionDiffOptions {
 export interface WriteOptions {
   allowed?: boolean;
   waitFor?: number | null;
-  name?: string;
-  expires?: string;
 }
 
 export class PeerService {
@@ -149,25 +147,10 @@ export class PeerService {
     }
 
     const fireIn = parseDelay(delay);
-    if (fireIn === null) {
-      throw new Error(
-        `Cannot parse delay: ${delay}. Use a duration like "30s", "5m", "1h" or an ISO timestamp like "2026-11-22T13:00:00". Max 1 hour, min 1 second.`,
-      );
-    }
 
     const fireAt = new Date(Date.now() + fireIn).toISOString();
 
     setTimeout(async () => {
-      if (options.expires && new Date(options.expires).getTime() < Date.now()) {
-        await this.log(
-          serverId,
-          sessionId,
-          'session_schedule',
-          gate.decision,
-          'expired',
-        );
-        return;
-      }
       try {
         await this.options.http.request(
           server,
@@ -522,12 +505,13 @@ export class PeerService {
   }
 }
 
-function parseDelay(input: string): number | null {
+function parseDelay(input: string): number {
   const parsed = Date.parse(input);
   if (!isNaN(parsed)) {
     const delay = parsed - Date.now();
     const clamped = delay < 0 ? 0 : delay;
-    if (clamped > 60 * 60 * 1000 || clamped < 1000) return null;
+    if (clamped > 60 * 60 * 1000 || clamped < 1000)
+      throw new Error(`Invalid delay: ${input}`);
     return clamped;
   }
   const cleaned = input.replace(/^in\s+/i, '').trim();
@@ -541,7 +525,8 @@ function parseDelay(input: string): number | null {
     if (unit.startsWith('s')) ms = n * 1000;
     else if (unit.startsWith('m')) ms = n * 60 * 1000;
     else if (unit.startsWith('h')) ms = n * 60 * 60 * 1000;
-    if (ms > 60 * 60 * 1000 || ms < 1000) return null;
+    if (ms > 60 * 60 * 1000 || ms < 1000)
+      throw new Error(`Invalid delay: ${input}`);
     return ms;
   }
   const parts = cleaned.match(/(\d+)\s*(h|m|s)/gi);
@@ -557,8 +542,10 @@ function parseDelay(input: string): number | null {
         else if (u === 's') total += n * 1000;
       }
     }
-    if (total > 60 * 60 * 1000 || total < 1000) return null;
-    return total > 0 ? total : null;
+    if (total > 60 * 60 * 1000 || total < 1000)
+      throw new Error(`Invalid delay: ${input}`);
+    if (total <= 0) throw new Error(`Invalid delay: ${input}`);
+    return total;
   }
-  return null;
+  throw new Error(`Invalid delay: ${input}`);
 }

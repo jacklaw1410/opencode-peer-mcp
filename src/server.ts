@@ -416,11 +416,6 @@ export function createMcpServer(service: PeerService): McpServer {
         .describe(
           'When to fire: a duration like "30s", "5m", "1h", "90s", "2m30s" or an ISO timestamp like "2026-11-22T13:00:00". Max 1 hour.',
         ),
-      name: z.string().optional().describe('Short label for the schedule.'),
-      expires: z
-        .string()
-        .optional()
-        .describe('ISO timestamp after which the schedule is cancelled.'),
       allowed: z
         .boolean()
         .optional()
@@ -432,13 +427,11 @@ export function createMcpServer(service: PeerService): McpServer {
       idempotentHint: false,
       openWorldHint: false,
     },
-    async ({ server, session_id, prompt, delay, name, expires, allowed }) => {
+    async ({ server, session_id, prompt, delay, allowed }) => {
       try {
         return jsonResult(
           await service.schedulePrompt(server, session_id, prompt, delay, {
             allowed,
-            name,
-            expires,
           }),
         );
       } catch (error) {
