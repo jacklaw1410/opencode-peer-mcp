@@ -437,6 +437,8 @@ export function createMcpServer(service: PeerService): McpServer {
         return jsonResult(
           await service.schedulePrompt(server, session_id, prompt, delay, {
             allowed,
+            name,
+            expires,
           }),
         );
       } catch (error) {

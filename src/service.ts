@@ -38,6 +38,8 @@ export interface SessionDiffOptions {
 export interface WriteOptions {
   allowed?: boolean;
   waitFor?: number | null;
+  name?: string;
+  expires?: string;
 }
 
 export class PeerService {
@@ -156,6 +158,16 @@ export class PeerService {
     const fireAt = new Date(Date.now() + fireIn).toISOString();
 
     setTimeout(async () => {
+      if (options.expires && new Date(options.expires).getTime() < Date.now()) {
+        await this.log(
+          serverId,
+          sessionId,
+          'session_schedule',
+          gate.decision,
+          'expired',
+        );
+        return;
+      }
       try {
         await this.options.http.request(
           server,
@@ -382,8 +394,8 @@ export class PeerService {
           })) as { data?: unknown[] };
           const data =
             messages?.data ?? (Array.isArray(messages) ? messages : []);
-          const assistantMsg = (data as any[]).find(
-            (m: any) => m.type === 'assistant',
+          const assistantMsg = (data as Array<{ type?: string }>).find(
+            (m) => m.type === 'assistant',
           );
           await this.log(
             serverId,
