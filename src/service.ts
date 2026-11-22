@@ -1,7 +1,29 @@
+import type { ZodType } from 'zod';
 import type { ResolvedServer } from './types.js';
-import { HttpClient } from './http.js';
+import { HttpClient, type HttpRequestOptions } from './http.js';
 import { Logger, type LogEntry } from './logger.js';
 import { evaluatePermission } from './permission.js';
+import {
+  actionResponseSchema,
+  type ActionResponse,
+  diffListResponseSchema,
+  type DiffListResponse,
+  messageListResponseSchema,
+  type Message,
+  type MessageListResponse,
+  type Session,
+  type SessionListResponse,
+  sessionListResponseSchema,
+  type SessionResponse,
+  sessionResponseSchema,
+} from './responses.js';
+
+export interface AwaitedPrompt {
+  prompt: ActionResponse;
+  awaited: true;
+  timed_out: boolean;
+  message: Message | null;
+}
 
 export interface PeerServiceOptions {
   servers: ResolvedServer[];
@@ -90,10 +112,21 @@ export class PeerService {
     return server;
   }
 
+  private async parsed<T>(
+    schema: ZodType<T>,
+    server: ResolvedServer,
+    path: string,
+    ...options: [HttpRequestOptions?]
+  ): Promise<T> {
+    return schema.parse(
+      await this.options.http.request(server, path, ...options),
+    );
+  }
+
   async listSessions(
     serverId: string,
     params: SessionListOptions = {},
-  ): Promise<unknown> {
+  ): Promise<SessionListResponse> {
     const server = this.resolveServer(serverId);
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 100);
     const query: Record<string, string | number | undefined> = {
@@ -107,12 +140,18 @@ export class PeerService {
     if (params.cursor) query.cursor = params.cursor;
     if (params.project) query.project = params.project;
     if (params.subpath) query.subpath = params.subpath;
-    return this.options.http.request(server, '/api/session', { query });
+    return this.parsed(sessionListResponseSchema, server, '/api/session', {
+      query,
+    });
   }
 
-  async getSession(serverId: string, sessionId: string): Promise<unknown> {
+  async getSession(
+    serverId: string,
+    sessionId: string,
+  ): Promise<SessionResponse> {
     const server = this.resolveServer(serverId);
-    return this.options.http.request(
+    return this.parsed(
+      sessionResponseSchema,
       server,
       `/api/session/${encodeURIComponent(sessionId)}`,
     );
@@ -192,14 +231,10 @@ export class PeerService {
   async getSessionStatus(
     serverId: string,
     sessionId: string,
-  ): Promise<unknown> {
-    const session = (await this.getSession(serverId, sessionId)) as {
-      data?: { time?: { busy?: number; idle?: number } };
-    };
-    const record = (session as { data?: unknown }).data ?? session;
-    const time = (record as { time?: { busy?: number; idle?: number } }).time;
-    const busy = time?.busy ?? 0;
-    const idle = time?.idle ?? 0;
+  ): Promise<{ status: 'busy' | 'idle'; session: SessionResponse }> {
+    const session = await this.getSession(serverId, sessionId);
+    const busy = session.data.time?.busy ?? 0;
+    const idle = session.data.time?.idle ?? 0;
     const status = busy > idle ? 'busy' : 'idle';
     return { status, session };
   }
@@ -208,14 +243,15 @@ export class PeerService {
     serverId: string,
     sessionId: string,
     params: SessionMessageOptions = {},
-  ): Promise<unknown> {
+  ): Promise<MessageListResponse> {
     const server = this.resolveServer(serverId);
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
     const query: Record<string, string | number | undefined> = { limit };
     if (params.order) query.order = params.order;
     if (params.cursor) query.cursor = params.cursor;
     if (params.type) query.type = params.type;
-    return this.options.http.request(
+    return this.parsed(
+      messageListResponseSchema,
       server,
       `/api/session/${encodeURIComponent(sessionId)}/message`,
       { query },
@@ -226,13 +262,14 @@ export class PeerService {
     serverId: string,
     sessionId: string,
     params: SessionDiffOptions = {},
-  ): Promise<unknown> {
+  ): Promise<DiffListResponse> {
     const server = this.resolveServer(serverId);
     const query: Record<string, string | number | undefined> = {};
     if (params.from) query.from = params.from;
     if (params.to) query.to = params.to;
     if (params.context !== undefined) query.context = params.context;
-    return this.options.http.request(
+    return this.parsed(
+      diffListResponseSchema,
       server,
       `/api/session/${encodeURIComponent(sessionId)}/diff`,
       { query },
@@ -243,7 +280,7 @@ export class PeerService {
     serverIds: string[] | undefined,
     query: string,
     limit = 20,
-  ): Promise<unknown> {
+  ): Promise<Array<{ server: string; session: Session }>> {
     const targets =
       serverIds && serverIds.length > 0
         ? serverIds.map((id) => this.resolveServer(id))
@@ -251,15 +288,18 @@ export class PeerService {
     const perServerLimit = Math.min(Math.max(limit, 1), 50);
     const results = await Promise.all(
       targets.map(async (server) => {
-        const response = (await this.options.http.request(
+        const response = await this.parsed(
+          sessionListResponseSchema,
           server,
           '/api/session',
           {
             query: { limit: perServerLimit, search: query },
           },
-        )) as { data?: unknown[] };
-        const items = Array.isArray(response?.data) ? response.data : [];
-        return items.map((item) => ({ server: server.id, session: item }));
+        );
+        return response.data.map((item) => ({
+          server: server.id,
+          session: item,
+        }));
       }),
     );
     return results.flat();
@@ -270,7 +310,10 @@ export class PeerService {
     sessionA: string,
     serverB: string,
     sessionB: string,
-  ): Promise<unknown> {
+  ): Promise<{
+    a: { server: string; session: SessionResponse };
+    b: { server: string; session: SessionResponse };
+  }> {
     const [a, b] = await Promise.all([
       this.getSession(serverA, sessionA),
       this.getSession(serverB, sessionB),
@@ -285,7 +328,7 @@ export class PeerService {
     serverId: string,
     params: Record<string, unknown>,
     options: WriteOptions = {},
-  ): Promise<unknown> {
+  ): Promise<SessionResponse> {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -296,38 +339,45 @@ export class PeerService {
       allowlisted,
       explicitAllow: Boolean(options.allowed),
     });
-    let result = 'denied';
-    let sessionId = '__create__';
-    let response: unknown;
-    if (gate.allowed) {
-      try {
-        response = await this.options.http.request(server, '/api/session', {
+    if (!gate.allowed) {
+      await this.log(
+        serverId,
+        '__create__',
+        'session_create',
+        gate.decision,
+        'denied',
+      );
+      throw new Error(`Write denied: ${gate.decision}`);
+    }
+    let response: SessionResponse;
+    try {
+      response = await this.parsed(
+        sessionResponseSchema,
+        server,
+        '/api/session',
+        {
           method: 'POST',
           body: params,
-        });
-        const data = (response as { data?: { id?: string } })?.data;
-        result = 'success';
-        sessionId = data?.id ?? sessionId;
-      } catch (error) {
-        result = `error: ${error instanceof Error ? error.message : String(error)}`;
-        await this.log(
-          serverId,
-          sessionId,
-          'session_create',
-          gate.decision,
-          result,
-        );
-        throw error;
-      }
+        },
+      );
+    } catch (error) {
+      const result = `error: ${error instanceof Error ? error.message : String(error)}`;
+      await this.log(
+        serverId,
+        '__create__',
+        'session_create',
+        gate.decision,
+        result,
+      );
+      throw error;
     }
     await this.log(
       serverId,
-      sessionId,
+      response.data.id ?? '__create__',
       'session_create',
       gate.decision,
-      result,
+      'success',
     );
-    if (!gate.allowed) throw new Error(`Write denied: ${gate.decision}`);
     return response;
   }
 
@@ -336,15 +386,7 @@ export class PeerService {
     sessionId: string,
     prompt: string,
     options: WriteOptions = {},
-  ): Promise<
-    | {
-        prompt: unknown;
-        awaited: boolean;
-        timed_out?: boolean;
-        message?: unknown;
-      }
-    | unknown
-  > {
+  ): Promise<ActionResponse | AwaitedPrompt> {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -358,7 +400,8 @@ export class PeerService {
     let result = 'denied';
     if (gate.allowed) {
       try {
-        const response = await this.options.http.request(
+        const response = await this.parsed(
+          actionResponseSchema,
           server,
           `/api/session/${encodeURIComponent(sessionId)}/prompt`,
           { method: 'POST', body: { text: prompt } },
@@ -371,21 +414,16 @@ export class PeerService {
           const timeoutMs = Math.min(Math.max(waitFor, 1000), 300000);
           const deadline = Date.now() + timeoutMs;
           while (Date.now() < deadline) {
-            const status = (await this.getSessionStatus(
-              serverId,
-              sessionId,
-            )) as { status: string };
+            const status = await this.getSessionStatus(serverId, sessionId);
             if (status.status === 'idle') break;
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
           // Fetch latest messages
-          const messages = (await this.getSessionMessages(serverId, sessionId, {
+          const messages = await this.getSessionMessages(serverId, sessionId, {
             limit: 5,
             order: 'desc',
-          })) as { data?: unknown[] };
-          const data =
-            messages?.data ?? (Array.isArray(messages) ? messages : []);
-          const assistantMsg = (data as Array<{ type?: string }>).find(
+          });
+          const assistantMsg = messages.data.find(
             (m) => m.type === 'assistant',
           );
           await this.log(
@@ -437,7 +475,7 @@ export class PeerService {
     serverId: string,
     sessionId: string,
     options: WriteOptions = {},
-  ): Promise<unknown> {
+  ): Promise<ActionResponse> {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -451,7 +489,8 @@ export class PeerService {
     let result = 'denied';
     if (gate.allowed) {
       try {
-        const response = await this.options.http.request(
+        const response = await this.parsed(
+          actionResponseSchema,
           server,
           `/api/session/${encodeURIComponent(sessionId)}/interrupt`,
           { method: 'POST' },

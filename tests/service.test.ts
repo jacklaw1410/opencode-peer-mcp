@@ -39,7 +39,7 @@ describe('PeerService', () => {
     });
 
     it('clamps session list limit and passes directory', async () => {
-      const http = { request: mock(async () => ({ ok: true })) };
+      const http = { request: mock(async () => ({ data: [] })) };
       const service = new PeerService({ servers, http: http as never });
       await service.listSessions('local', { limit: 500, directory: '/tmp' });
       expect(http.request).toHaveBeenCalledWith(servers[0], '/api/session', {
@@ -50,7 +50,7 @@ describe('PeerService', () => {
 
   describe('getSession', () => {
     it('encodes session IDs when fetching a session', async () => {
-      const http = { request: mock(async () => ({ ok: true })) };
+      const http = { request: mock(async () => ({ data: { id: 'a/b' } })) };
       const service = new PeerService({ servers, http: http as never });
       await service.getSession('local', 'a/b');
       expect(http.request).toHaveBeenCalledWith(
