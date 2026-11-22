@@ -181,6 +181,8 @@ describe('PeerService writes', () => {
     })) as { awaited: boolean; timed_out: boolean; message: unknown };
     expect(result.awaited).toBe(true);
     expect(result.timed_out).toBe(false);
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 
   it('returns timed_out when await exceeds timeout', async () => {
@@ -203,6 +205,8 @@ describe('PeerService writes', () => {
     })) as { awaited: boolean; timed_out: boolean };
     expect(result.awaited).toBe(true);
     expect(result.timed_out).toBe(true);
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 
   it('returns immediately when wait_for is null', async () => {
@@ -218,6 +222,9 @@ describe('PeerService writes', () => {
       waitFor: null,
     });
     expect((result as { awaited?: boolean }).awaited).toBeUndefined();
+    expect((result as { timed_out?: boolean }).timed_out).toBeUndefined();
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
   });
 
   it('schedules a prompt with a relative delay', async () => {
