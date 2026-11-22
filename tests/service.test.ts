@@ -146,4 +146,169 @@ describe('PeerService writes', () => {
     expect(http.request).toHaveBeenCalled();
     expect(logger.log).toHaveBeenCalled();
   });
+
+  it('awaits remote response when wait_for is set', async () => {
+    let callCount = 0;
+    const http = {
+      request: mock(async (server: unknown, path: string) => {
+        if (path.includes('/prompt')) return { data: { id: 'msg-1' } };
+        if (path.includes('/message')) {
+          return {
+            data: [
+              { type: 'assistant', content: [{ type: 'text', text: 'done' }] },
+            ],
+          };
+        }
+        if (path.includes('/session/')) {
+          callCount++;
+          if (callCount >= 2) {
+            return { data: { time: { busy: 1, idle: 2 } } };
+          }
+          return { data: { time: { busy: 2, idle: 1 } } };
+        }
+        return { data: [] };
+      }),
+    };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    const result = (await service.promptSession('local', 'session-1', 'hello', {
+      waitFor: 5000,
+    })) as { awaited: boolean; timed_out: boolean; message: unknown };
+    expect(result.awaited).toBe(true);
+    expect(result.timed_out).toBe(false);
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
+  });
+
+  it('returns timed_out when await exceeds timeout', async () => {
+    const http = {
+      request: mock(async (server: unknown, path: string) => {
+        if (path.includes('/prompt')) return { data: { id: 'msg-1' } };
+        if (path.includes('/message')) return { data: [] };
+        return { data: { time: { busy: 10, idle: 1 } } };
+      }),
+    };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    const result = (await service.promptSession('local', 'session-1', 'hello', {
+      waitFor: 1000,
+    })) as { awaited: boolean; timed_out: boolean };
+    expect(result.awaited).toBe(true);
+    expect(result.timed_out).toBe(true);
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
+  });
+
+  it('returns immediately when wait_for is null', async () => {
+    const http = { request: mock(async () => ({ data: { id: 'msg-1' } })) };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    const result = await service.promptSession('local', 'session-1', 'hello', {
+      waitFor: null,
+    });
+    expect((result as { awaited?: boolean }).awaited).toBeUndefined();
+    expect((result as { timed_out?: boolean }).timed_out).toBeUndefined();
+    expect(http.request).toHaveBeenCalled();
+    expect(logger.log).toHaveBeenCalled();
+  });
+
+  it('schedules a prompt with a relative delay', async () => {
+    const http = { request: mock(async () => ({ ok: true })) };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    const result = (await service.schedulePrompt(
+      'local',
+      'session-1',
+      'hello',
+      '5s',
+    )) as { scheduled: boolean; delay_ms: number };
+    expect(result.scheduled).toBe(true);
+    expect(result.delay_ms).toBe(5000);
+    expect(logger.log).toHaveBeenCalled();
+  });
+
+  it('schedules a prompt with an absolute timestamp', async () => {
+    const http = { request: mock(async () => ({ ok: true })) };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    const future = new Date(Date.now() + 30000).toISOString();
+    const result = (await service.schedulePrompt(
+      'local',
+      'session-1',
+      'hello',
+      future,
+    )) as { scheduled: boolean; delay_ms: number };
+    expect(result.scheduled).toBe(true);
+    expect(result.delay_ms).toBeGreaterThan(0);
+  });
+
+  it('rejects invalid delay', async () => {
+    const http = { request: mock() };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    await expect(
+      service.schedulePrompt('local', 'session-1', 'hello', 'not-a-delay'),
+    ).rejects.toThrow(/Cannot parse delay/);
+  });
+
+  it('rejects delay over 1 hour', async () => {
+    const http = { request: mock() };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: true,
+      logger: logger as never,
+    });
+    await expect(
+      service.schedulePrompt('local', 'session-1', 'hello', '2h'),
+    ).rejects.toThrow(/Delay exceeds 1 hour/);
+  });
+
+  it('denies schedule when gate is closed', async () => {
+    const http = { request: mock() };
+    const logger = { log: mock(async () => undefined) };
+    const service = new PeerService({
+      servers,
+      http: http as never,
+      writable: false,
+      logger: logger as never,
+    });
+    await expect(
+      service.schedulePrompt('local', 'session-1', 'hello', '5s', {
+        allowed: true,
+      }),
+    ).rejects.toThrow(/Write denied/);
+    expect(http.request).not.toHaveBeenCalled();
+  });
 });

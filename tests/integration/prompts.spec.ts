@@ -33,6 +33,61 @@ test('session_prompt on alpha returns the fixed reply in session_messages', asyn
   expect(toolText(messages)).toContain(FIXTURE_REPLY);
 });
 
+test('session_prompt with wait_for returns the assistant reply', async () => {
+  const result = await callTool(client, 'session_prompt', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+    prompt: 'hello await from fixture test',
+    wait_for: 10000,
+  });
+  expect(result.isError).not.toBe(true);
+  const parsed = JSON.parse(toolText(result)) as {
+    awaited: boolean;
+    timed_out: boolean;
+    message: {
+      type: string;
+      content?: Array<{ type: string; text: string }>;
+    } | null;
+  };
+  expect(parsed.awaited).toBe(true);
+  expect(parsed.timed_out).toBe(false);
+  expect(parsed.message).not.toBeNull();
+});
+
+test('session_schedule sends the prompt only after the delay', async () => {
+  const marker = `scheduled marker ${Date.now()}`;
+  const startedAt = Date.now();
+  const result = await callTool(client, 'session_schedule', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+    prompt: marker,
+    delay: '3s',
+  });
+  expect(result.isError).not.toBe(true);
+  const parsed = JSON.parse(toolText(result)) as {
+    scheduled: boolean;
+    delay_ms: number;
+  };
+  expect(parsed.scheduled).toBe(true);
+  expect(parsed.delay_ms).toBe(3000);
+
+  const before = await callTool(client, 'session_messages', {
+    server: 'alpha',
+    session_id: state.alphaSessionId,
+  });
+  expect(toolText(before)).not.toContain(marker);
+
+  const after = await pollTool(
+    client,
+    'session_messages',
+    { server: 'alpha', session_id: state.alphaSessionId },
+    (text) => text.includes(marker),
+    10000,
+  );
+  expect(toolText(after)).toContain(marker);
+  expect(Date.now() - startedAt).toBeGreaterThanOrEqual(3000);
+});
+
 test('scripted edit on alpha appears in session_diff', async () => {
   const target = `${ROOT}/work/edited.txt`;
   const prompt = await callTool(client, 'session_prompt', {

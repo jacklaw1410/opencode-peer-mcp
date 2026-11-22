@@ -50,6 +50,7 @@ describe('createMcpServer', () => {
       'session_create',
       'session_prompt',
       'session_interrupt',
+      'session_schedule',
     ]);
 
     const result = await client.callTool({

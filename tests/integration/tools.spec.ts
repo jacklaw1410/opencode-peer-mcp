@@ -27,6 +27,7 @@ test('lists the expected tools', async () => {
     'session_create',
     'session_prompt',
     'session_interrupt',
+    'session_schedule',
   ];
   expect(names).toEqual(expect.arrayContaining(expected));
   expect(names).toHaveLength(expected.length);

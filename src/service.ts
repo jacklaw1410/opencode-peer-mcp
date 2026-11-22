@@ -37,6 +37,7 @@ export interface SessionDiffOptions {
 
 export interface WriteOptions {
   allowed?: boolean;
+  waitFor?: number | null;
 }
 
 export class PeerService {
@@ -115,6 +116,77 @@ export class PeerService {
       server,
       `/api/session/${encodeURIComponent(sessionId)}`,
     );
+  }
+
+  async schedulePrompt(
+    serverId: string,
+    sessionId: string,
+    prompt: string,
+    delay: string,
+    options: WriteOptions = {},
+  ): Promise<{ scheduled: boolean; fires_at: string; delay_ms: number }> {
+    const server = this.resolveServer(serverId);
+    const allowlisted =
+      server.allowlist.includes('*') ||
+      server.allowlist.includes(sessionId) ||
+      Boolean(options.allowed);
+    const gate = evaluatePermission({
+      globalEnabled: this.writable,
+      allowlisted,
+      explicitAllow: Boolean(options.allowed),
+    });
+    if (!gate.allowed) {
+      await this.log(
+        serverId,
+        sessionId,
+        'session_schedule',
+        gate.decision,
+        'denied',
+      );
+      throw new Error(`Write denied: ${gate.decision}`);
+    }
+
+    const fireIn = parseDelay(delay);
+
+    const fireAt = new Date(Date.now() + fireIn).toISOString();
+
+    setTimeout(async () => {
+      try {
+        await this.options.http.request(
+          server,
+          `/api/session/${encodeURIComponent(sessionId)}/prompt`,
+          {
+            method: 'POST',
+            body: { text: prompt },
+          },
+        );
+        await this.log(
+          serverId,
+          sessionId,
+          'session_schedule',
+          gate.decision,
+          'success',
+        );
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        await this.log(
+          serverId,
+          sessionId,
+          'session_schedule',
+          gate.decision,
+          `error: ${msg}`,
+        );
+      }
+    }, fireIn);
+
+    await this.log(
+      serverId,
+      sessionId,
+      'session_schedule',
+      gate.decision,
+      'scheduled',
+    );
+    return { scheduled: true, fires_at: fireAt, delay_ms: fireIn };
   }
 
   async getSessionStatus(
@@ -264,7 +336,15 @@ export class PeerService {
     sessionId: string,
     prompt: string,
     options: WriteOptions = {},
-  ): Promise<unknown> {
+  ): Promise<
+    | {
+        prompt: unknown;
+        awaited: boolean;
+        timed_out?: boolean;
+        message?: unknown;
+      }
+    | unknown
+  > {
     const server = this.resolveServer(serverId);
     const allowlisted =
       server.allowlist.includes('*') ||
@@ -284,6 +364,45 @@ export class PeerService {
           { method: 'POST', body: { text: prompt } },
         );
         result = 'success';
+
+        // Await mode: poll until idle or timeout
+        const waitFor = options.waitFor;
+        if (waitFor && waitFor > 0) {
+          const timeoutMs = Math.min(Math.max(waitFor, 1000), 300000);
+          const deadline = Date.now() + timeoutMs;
+          while (Date.now() < deadline) {
+            const status = (await this.getSessionStatus(
+              serverId,
+              sessionId,
+            )) as { status: string };
+            if (status.status === 'idle') break;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          // Fetch latest messages
+          const messages = (await this.getSessionMessages(serverId, sessionId, {
+            limit: 5,
+            order: 'desc',
+          })) as { data?: unknown[] };
+          const data =
+            messages?.data ?? (Array.isArray(messages) ? messages : []);
+          const assistantMsg = (data as Array<{ type?: string }>).find(
+            (m) => m.type === 'assistant',
+          );
+          await this.log(
+            serverId,
+            sessionId,
+            'session_prompt',
+            gate.decision,
+            result,
+          );
+          return {
+            prompt: response,
+            awaited: true,
+            timed_out: Date.now() >= deadline,
+            message: assistantMsg ?? null,
+          };
+        }
+
         await this.log(
           serverId,
           sessionId,
@@ -392,4 +511,62 @@ export class PeerService {
     };
     await this.logger.log(entry);
   }
+}
+
+function parseDelay(input: string): number {
+  const parsed = Date.parse(input);
+  if (!isNaN(parsed)) {
+    const delay = parsed - Date.now();
+    const clamped = delay < 0 ? 0 : delay;
+    if (clamped > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (clamped < 1000)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
+    return clamped;
+  }
+  const cleaned = input.replace(/^in\s+/i, '').trim();
+  const match = cleaned.match(
+    /^(\d+)\s*(s|sec|seconds?|m|min|minutes?|h|hr|hours?)$/i,
+  );
+  if (match) {
+    const n = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    let ms = 0;
+    if (unit.startsWith('s')) ms = n * 1000;
+    else if (unit.startsWith('m')) ms = n * 60 * 1000;
+    else if (unit.startsWith('h')) ms = n * 60 * 60 * 1000;
+    if (ms > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (ms < 1000)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
+    return ms;
+  }
+  const parts = cleaned.match(/(\d+)\s*(h|m|s)/gi);
+  if (parts && parts.length > 1) {
+    let total = 0;
+    for (const part of parts) {
+      const m = part.match(/(\d+)\s*(h|m|s)/i);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        const u = m[2].toLowerCase();
+        if (u === 'h') total += n * 3600000;
+        else if (u === 'm') total += n * 60000;
+        else if (u === 's') total += n * 1000;
+      }
+    }
+    if (total > 60 * 60 * 1000)
+      throw new Error(
+        `Delay exceeds 1 hour: ${input}. Use OpenCode built-in automations for longer waits.`,
+      );
+    if (total < 1000 || total <= 0)
+      throw new Error(`Delay must be at least 1 second: ${input}.`);
+    return total;
+  }
+  throw new Error(
+    `Cannot parse delay: ${input}. Use a duration like "30s", "5m", "1h" or an ISO timestamp like "2026-11-22T13:00:00".`,
+  );
 }
