@@ -9,6 +9,7 @@ export function createMcpServer(service: PeerService): McpServer {
     'servers_list',
     'List configured OpenCode servers.',
     {},
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async () => {
       return jsonResult(service.listServers());
     },
@@ -18,8 +19,12 @@ export function createMcpServer(service: PeerService): McpServer {
     'server_get',
     'Get one configured OpenCode server.',
     {
-      server: z.string().min(1),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server: serverId }) => {
       try {
         return jsonResult(service.getServer(serverId));
@@ -33,17 +38,36 @@ export function createMcpServer(service: PeerService): McpServer {
     'sessions_list',
     'List sessions on a configured server.',
     {
-      server: z.string().min(1),
-      limit: z.number().int().positive().max(100).optional(),
-      directory: z.string().optional(),
-      order: z.enum(['asc', 'desc']).optional(),
-      search: z.string().optional(),
-      archived: z.boolean().optional(),
-      parent_id: z.string().optional(),
-      cursor: z.string().optional(),
-      project: z.string().optional(),
-      subpath: z.string().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(100)
+        .optional()
+        .describe('Max sessions to return.'),
+      directory: z.string().optional().describe('Filter by working directory.'),
+      order: z
+        .enum(['asc', 'desc'])
+        .optional()
+        .describe('Sort order by updated time.'),
+      search: z
+        .string()
+        .optional()
+        .describe('Substring to match in title or id.'),
+      archived: z.boolean().optional().describe('Include archived sessions.'),
+      parent_id: z.string().optional().describe('Filter by parent session id.'),
+      cursor: z
+        .string()
+        .optional()
+        .describe('Pagination cursor from previous page.'),
+      project: z.string().optional().describe('Filter by project id.'),
+      subpath: z.string().optional().describe('Filter by subpath.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({
       server,
       limit,
@@ -80,9 +104,13 @@ export function createMcpServer(service: PeerService): McpServer {
     'session_get',
     'Get a session by ID from a configured server.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server, session_id }) => {
       try {
         return jsonResult(await service.getSession(server, session_id));
@@ -96,9 +124,13 @@ export function createMcpServer(service: PeerService): McpServer {
     'session_status',
     'Get derived status for a session.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server, session_id }) => {
       try {
         return jsonResult(await service.getSessionStatus(server, session_id));
@@ -110,15 +142,31 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'session_messages',
-    'Get messages for a session.',
+    'Get messages for a session. Returns only the message list; does not fetch session details or status.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
-      limit: z.number().int().positive().max(200).optional(),
-      order: z.enum(['asc', 'desc']).optional(),
-      cursor: z.string().optional(),
-      type: z.string().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(200)
+        .optional()
+        .describe('Max messages to return.'),
+      order: z
+        .enum(['asc', 'desc'])
+        .optional()
+        .describe('Sort order by updated time.'),
+      cursor: z
+        .string()
+        .optional()
+        .describe('Pagination cursor from previous page.'),
+      type: z.string().optional().describe('Filter by message type.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server, session_id, limit, order, cursor, type }) => {
       try {
         return jsonResult(
@@ -137,14 +185,23 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'session_diff',
-    'Get structured diffs for a session turn.',
+    'Get structured diffs for a session turn. Returns only the diff; does not fetch messages or session details.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
-      from: z.string().optional(),
-      to: z.string().optional(),
-      context: z.number().int().nonnegative().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
+      from: z.string().optional().describe('Starting turn id.'),
+      to: z.string().optional().describe('Ending turn id.'),
+      context: z
+        .number()
+        .int()
+        .nonnegative()
+        .optional()
+        .describe('Lines of context around changes.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server, session_id, from, to, context }) => {
       try {
         return jsonResult(
@@ -162,12 +219,24 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'sessions_search',
-    'Search sessions across configured servers.',
+    'Search sessions across configured servers. Returns matching sessions with their ids and titles; no follow-up calls needed. Omit the servers parameter to search all configured servers; do not call servers_list first.',
     {
-      servers: z.array(z.string().min(1)).optional(),
-      query: z.string().min(1),
-      limit: z.number().int().positive().max(50).optional(),
+      servers: z
+        .array(z.string().min(1))
+        .optional()
+        .describe(
+          'Server ids to search. Omit to search all configured servers.',
+        ),
+      query: z.string().min(1).describe('Search query.'),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(50)
+        .optional()
+        .describe('Max results per server.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ servers, query, limit }) => {
       try {
         return jsonResult(await service.searchSessions(servers, query, limit));
@@ -179,13 +248,14 @@ export function createMcpServer(service: PeerService): McpServer {
 
   server.tool(
     'sessions_compare',
-    'Compare two sessions across configured servers.',
+    'Compare two sessions across configured servers. Returns both sessions side by side; does not fetch messages or diffs.',
     {
-      server_a: z.string().min(1),
-      session_a: z.string().min(1),
-      server_b: z.string().min(1),
-      session_b: z.string().min(1),
+      server_a: z.string().min(1).describe('First server id.'),
+      session_a: z.string().min(1).describe('First session id.'),
+      server_b: z.string().min(1).describe('Second server id.'),
+      session_b: z.string().min(1).describe('Second session id.'),
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async ({ server_a, session_a, server_b, session_b }) => {
       try {
         return jsonResult(
@@ -206,18 +276,36 @@ export function createMcpServer(service: PeerService): McpServer {
     'session_create',
     'Create a session on a configured server.',
     {
-      server: z.string().min(1),
-      directory: z.string().min(1),
-      title: z.string().optional(),
-      agent: z.string().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      directory: z
+        .string()
+        .min(1)
+        .describe('Working directory for the session.'),
+      title: z.string().optional().describe('Session title.'),
+      agent: z.string().optional().describe('Agent name to use.'),
       model: z
         .object({
-          providerID: z.string().min(1),
-          id: z.string().min(1),
-          variant: z.string().optional(),
+          providerID: z
+            .string()
+            .min(1)
+            .describe('Provider id (e.g. opencode-go).'),
+          id: z.string().min(1).describe('Model id (e.g. beam-free).'),
+          variant: z.string().optional().describe('Model variant.'),
         })
         .optional(),
-      allowed: z.boolean().optional(),
+      allowed: z
+        .boolean()
+        .optional()
+        .describe('Allow write operations (gated).'),
+    },
+    {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
     },
     async ({ server, directory, title, agent, model, allowed }) => {
       try {
@@ -238,10 +326,22 @@ export function createMcpServer(service: PeerService): McpServer {
     'session_prompt',
     'Prompt a session on a configured server.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
-      prompt: z.string().min(1),
-      allowed: z.boolean().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
+      prompt: z.string().min(1).describe('Prompt text to send.'),
+      allowed: z
+        .boolean()
+        .optional()
+        .describe('Allow write operations (gated).'),
+    },
+    {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
     },
     async ({ server, session_id, prompt, allowed }) => {
       try {
@@ -258,9 +358,21 @@ export function createMcpServer(service: PeerService): McpServer {
     'session_interrupt',
     'Interrupt a session on a configured server.',
     {
-      server: z.string().min(1),
-      session_id: z.string().min(1),
-      allowed: z.boolean().optional(),
+      server: z
+        .string()
+        .min(1)
+        .describe('Configured server id (e.g. linux, window, mbp).'),
+      session_id: z.string().min(1).describe('Session id on that server.'),
+      allowed: z
+        .boolean()
+        .optional()
+        .describe('Allow write operations (gated).'),
+    },
+    {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: false,
     },
     async ({ server, session_id, allowed }) => {
       try {
