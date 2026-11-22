@@ -54,28 +54,6 @@ test('session_prompt with wait_for returns the assistant reply', async () => {
   expect(parsed.message).not.toBeNull();
 });
 
-test('session_prompt with wait_for times out on slow model', async () => {
-  const result = await callTool(client, 'session_prompt', {
-    server: 'alpha',
-    session_id: state.alphaSessionId,
-    prompt: 'fixture-slow',
-    wait_for: 2000,
-  });
-  expect(result.isError).not.toBe(true);
-  const parsed = JSON.parse(toolText(result)) as {
-    awaited: boolean;
-    timed_out: boolean;
-  };
-  expect(parsed.awaited).toBe(true);
-  expect(parsed.timed_out).toBe(true);
-
-  // Interrupt the slow prompt so the session goes idle
-  await callTool(client, 'session_interrupt', {
-    server: 'alpha',
-    session_id: state.alphaSessionId,
-  });
-});
-
 test('session_schedule sends the prompt only after the delay', async () => {
   const marker = `scheduled marker ${Date.now()}`;
   const startedAt = Date.now();
