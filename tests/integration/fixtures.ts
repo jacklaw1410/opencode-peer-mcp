@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { createWriteStream, readFileSync, rmSync } from 'node:fs';
+import { createWriteStream, existsSync, readFileSync, rmSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { connect } from 'node:net';
@@ -203,8 +203,16 @@ export async function startFixtures(
   }
   await assertPortFree(layout.modelPort);
 
+  const rootMarker = path.join(layout.root, '.opencode-peer-mcp-eval-root');
+  if (existsSync(layout.root) && !existsSync(rootMarker)) {
+    throw new Error(
+      `Refusing to delete unmarked fixture root: ${layout.root}. ` +
+        'Remove it manually if you are sure.',
+    );
+  }
   await rm(layout.root, { recursive: true, force: true });
   await mkdir(`${layout.root}/work`, { recursive: true });
+  await writeFile(rootMarker, 'eval root\n');
   execFileSync('git', ['init', '-q'], { cwd: `${layout.root}/work` });
   execFileSync(
     'git',
