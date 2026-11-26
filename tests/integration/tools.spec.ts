@@ -37,7 +37,7 @@ test('servers_list returns configured servers', async () => {
   const result = await callTool(client, 'servers_list', {});
   expect(result.isError).not.toBe(true);
   const parsed = JSON.parse(toolText(result)) as Array<{ id: string }>;
-  expect(parsed.map((server) => server.id)).toEqual(['alpha', 'beta']);
+  expect(parsed.map((server) => server.id)).toEqual(['alpha', 'beta', 'gamma']);
 });
 
 test('server_get returns the details of alpha and beta', async () => {

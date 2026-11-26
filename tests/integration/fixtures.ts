@@ -11,10 +11,15 @@ export type FixtureLayout = {
   root: string;
   alphaPort: number;
   betaPort: number;
+  gammaPort: number;
   modelPort: number;
 };
 
-export type FixtureState = { alphaSessionId: string; betaSessionId: string };
+export type FixtureState = {
+  alphaSessionId: string;
+  betaSessionId: string;
+  writeSessionId: string;
+};
 
 export const INTEGRATION_LAYOUT: FixtureLayout = {
   root: path.resolve(
@@ -23,6 +28,7 @@ export const INTEGRATION_LAYOUT: FixtureLayout = {
   ),
   alphaPort: 49421,
   betaPort: 49422,
+  gammaPort: 49424,
   modelPort: 49423,
 };
 
@@ -89,6 +95,7 @@ function serversFor(layout: FixtureLayout): FixtureServer[] {
   return [
     { port: layout.alphaPort, password: SERVERS.alpha.password },
     { port: layout.betaPort, password: SERVERS.beta.password },
+    { port: layout.gammaPort, password: SERVERS.alpha.password },
   ];
 }
 
@@ -162,6 +169,7 @@ async function waitForServer(server: FixtureServer): Promise<void> {
 async function createSession(
   root: string,
   server: FixtureServer,
+  title = 'peer-mcp-fixture',
 ): Promise<string> {
   const res = await fetch(`http://127.0.0.1:${server.port}/api/session`, {
     method: 'POST',
@@ -171,7 +179,7 @@ async function createSession(
     },
     body: JSON.stringify({
       directory: `${root}/work`,
-      title: 'peer-mcp-fixture',
+      title,
     }),
   });
   if (!res.ok) {
@@ -280,13 +288,15 @@ export async function startFixtures(
 
     await Promise.all(servers.map((server) => waitForServer(server)));
 
-    const [alphaId, betaId] = await Promise.all([
+    const [alphaId, betaId, writeId] = await Promise.all([
       createSession(layout.root, servers[0]),
       createSession(layout.root, servers[1]),
+      createSession(layout.root, servers[2], 'peer-mcp-write-fixture'),
     ]);
     state.sessions.push(
       { ...servers[0], id: alphaId },
       { ...servers[1], id: betaId },
+      { ...servers[2], id: writeId },
     );
 
     const yaml = [
@@ -302,13 +312,24 @@ export async function startFixtures(
       `    url: http://127.0.0.1:${servers[1].port}`,
       '    password_env: OPENCODE_BETA_PASSWORD',
       '    auth: basic',
+      '  - id: gamma',
+      `    url: http://127.0.0.1:${servers[2].port}`,
+      '    password_env: OPENCODE_ALPHA_PASSWORD',
+      '    auth: basic',
+      '    allowlist:',
+      `      - '${writeId}'`,
+      "      - 'create'",
       '',
     ].join('\n');
     await writeFile(`${layout.root}/servers.yaml`, yaml, 'utf8');
     await writeFile(
       `${layout.root}/state.json`,
       JSON.stringify(
-        { alphaSessionId: alphaId, betaSessionId: betaId },
+        {
+          alphaSessionId: alphaId,
+          betaSessionId: betaId,
+          writeSessionId: writeId,
+        },
         null,
         2,
       ),
