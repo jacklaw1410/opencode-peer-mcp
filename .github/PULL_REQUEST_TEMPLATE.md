@@ -8,8 +8,9 @@
 - [ ] `bun run lint`
 - [ ] `bun run test`
 
+## Evidence / Verification
+
 ## Checklist
 
 - [ ] Documentation updated
 - [ ] No secrets committed
-      EOF

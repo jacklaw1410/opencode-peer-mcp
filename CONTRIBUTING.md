@@ -31,4 +31,3 @@ The pre-commit hook runs `bun fmt --staged`, `bun lint --staged --fix`, and `bun
 ## Commit messages
 
 Use Conventional Commits (e.g. `feat:`, `fix:`, `docs:`, `test:`, `chore:`).
-EOF

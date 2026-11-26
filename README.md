@@ -24,6 +24,8 @@ bun run build
 
 Servers are supplied in a YAML config file. Secrets are referenced by environment variable name, never stored directly.
 
+Suggested default path: `~/.config/opencode-peer-mcp/servers.yaml`.
+
 ```yaml
 servers:
   - id: local
@@ -48,11 +50,16 @@ Or configure it as an MCP server in your MCP client using the deployment snippet
 
 ## MCP tools
 
-Phase 1 (read-only): `servers_list`, `sessions_list`, `session_get`, `session_status`, `session_messages`, `session_diff`, `sessions_search`, `sessions_compare`.
+`servers_list`, `sessions_list`, `session_get`, `session_status`, `session_messages`, `session_diff`, `sessions_search`, `sessions_compare`, `session_create`, `session_prompt`, `session_interrupt`, `session_schedule`.
 
-Phase 2 (gated writes): `session_create`, `session_prompt`, `session_interrupt`, `session_schedule`.
+## Write access
 
-Write operations require the global write gate and per-session allowlisting. Denied attempts are recorded in the audit log.
+Write operations are disabled by default. To enable them:
+
+1. Set `OPENCODE_PEER_MCP_WRITE_ENABLED=true`.
+2. Allowlist target sessions in the config or via tool arguments.
+
+Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`).
 
 ## Troubleshooting
 
@@ -83,4 +90,3 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE).
-EOF

@@ -24,5 +24,3 @@ assignees: ''
 - MCP client:
 
 ## Additional context
-
-EOF
