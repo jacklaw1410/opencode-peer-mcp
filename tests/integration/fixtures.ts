@@ -11,7 +11,7 @@ export type FixtureLayout = {
   root: string;
   alphaPort: number;
   betaPort: number;
-  gammaPort: number;
+  writePort: number;
   modelPort: number;
 };
 
@@ -28,7 +28,7 @@ export const INTEGRATION_LAYOUT: FixtureLayout = {
   ),
   alphaPort: 49421,
   betaPort: 49422,
-  gammaPort: 49424,
+  writePort: 49424,
   modelPort: 49423,
 };
 
@@ -55,6 +55,10 @@ export const SERVERS = {
   beta: {
     port: INTEGRATION_LAYOUT.betaPort,
     password: process.env.OPENCODE_BETA_PASSWORD ?? 'beta-pass',
+  },
+  write: {
+    port: INTEGRATION_LAYOUT.writePort,
+    password: process.env.OPENCODE_WRITE_PASSWORD ?? 'write-pass',
   },
 } as const;
 
@@ -95,7 +99,7 @@ function serversFor(layout: FixtureLayout): FixtureServer[] {
   return [
     { port: layout.alphaPort, password: SERVERS.alpha.password },
     { port: layout.betaPort, password: SERVERS.beta.password },
-    { port: layout.gammaPort, password: SERVERS.alpha.password },
+    { port: layout.writePort, password: SERVERS.write.password },
   ];
 }
 
@@ -312,9 +316,9 @@ export async function startFixtures(
       `    url: http://127.0.0.1:${servers[1].port}`,
       '    password_env: OPENCODE_BETA_PASSWORD',
       '    auth: basic',
-      '  - id: gamma',
+      '  - id: write',
       `    url: http://127.0.0.1:${servers[2].port}`,
-      '    password_env: OPENCODE_ALPHA_PASSWORD',
+      '    password_env: OPENCODE_WRITE_PASSWORD',
       '    auth: basic',
       '    allowlist:',
       `      - '${writeId}'`,

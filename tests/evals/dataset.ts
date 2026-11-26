@@ -89,7 +89,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
   const writeSession = state.writeSessionId;
   // Write cases run against a dedicated server/session so read cases never
   // observe the state they mutate.
-  const writeServer = 'gamma';
+  const writeServer = 'write';
   const workDir = `${EVAL_LAYOUT.root}/work`;
 
   const standalone: EvalCase[] = [
