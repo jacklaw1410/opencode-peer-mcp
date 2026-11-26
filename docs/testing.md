@@ -17,7 +17,6 @@
 | `bun run format:check`     | Check formatting.                                                  |
 | `bun run format`           | Format files.                                                      |
 | `bun run test:integration` | Build, start two fixture OpenCode servers, run integration specs.  |
-| `bun run evals`            | Build and run Playwright-based MCP evals. See [evals](./evals.md). |
 
 ## Unit tests
 
@@ -28,10 +27,6 @@ Cover config loading, auth resolution, HTTP retries and bounds, permission decis
 `tests/integration` starts two OpenCode servers and one fixture model server, then exercises every MCP tool through a real client. They require `opencode` on `PATH`.
 
 Fixtures use ports `49421`, `49422`, and `49423`. The fixture root defaults to `/tmp/opencode-peer-mcp-integration`; override with `OPENCODE_PEER_MCP_INTEGRATION_ROOT`. The root must be under `/tmp` or `os.tmpdir()` and is deleted recursively before and after each run, so use a disposable path.
-
-## Evals
-
-Evals are scenario-based model evaluations, not ordinary unit or integration tests. Run them with `bun run evals` and see [docs/evals.md](./evals.md) for setup, environment variables, and baseline workflow.
 
 ## Pre-commit hook
 
