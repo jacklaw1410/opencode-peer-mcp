@@ -18,6 +18,7 @@ describe('resolveAuth', () => {
       id: 'local',
       url: 'http://example.test',
       password_env: 'TEST_PASSWORD',
+      auth: 'basic',
     };
     expect(resolveAuth(server)).toEqual({
       auth: 'basic',
@@ -37,8 +38,12 @@ describe('resolveAuth', () => {
     expect(resolveAuth(server)).toEqual({ auth: 'bearer', token: 'token' });
   });
 
-  it('resolves none when no secret is configured', () => {
-    const server: ServerConfig = { id: 'local', url: 'http://example.test' };
+  it('resolves explicit none', () => {
+    const server: ServerConfig = {
+      id: 'local',
+      url: 'http://example.test',
+      auth: 'none',
+    };
     expect(resolveAuth(server)).toEqual({ auth: 'none' });
   });
 
@@ -56,6 +61,7 @@ describe('resolveAuth', () => {
       id: 'local',
       url: 'http://example.test',
       password_env: 'MISSING_PASSWORD',
+      auth: 'basic',
     };
     expect(() => resolveAuth(server)).toThrow(/not set/);
   });
@@ -63,7 +69,11 @@ describe('resolveAuth', () => {
 
 describe('toResolvedServer', () => {
   it('applies defaults', () => {
-    const server: ServerConfig = { id: 'local', url: 'http://example.test' };
+    const server: ServerConfig = {
+      id: 'local',
+      url: 'http://example.test',
+      auth: 'none',
+    };
     expect(toResolvedServer(server)).toMatchObject({
       id: 'local',
       url: 'http://example.test',

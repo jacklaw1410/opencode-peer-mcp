@@ -9,7 +9,7 @@ const ServerSchema = z.object({
   url: z.string().url(),
   password_env: z.string().min(1).optional(),
   token_env: z.string().min(1).optional(),
-  auth: z.enum(['basic', 'bearer', 'none']).optional(),
+  auth: z.enum(['basic', 'bearer', 'none']),
   timeout_ms: z.number().int().positive().optional(),
   allowlist: z.array(z.string()).optional(),
 });

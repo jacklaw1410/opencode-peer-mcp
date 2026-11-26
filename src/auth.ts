@@ -9,9 +9,7 @@ export function resolveAuth(server: ServerConfig): {
   password?: string;
   token?: string;
 } {
-  const requested =
-    server.auth ??
-    (server.password_env ? 'basic' : server.token_env ? 'bearer' : 'none');
+  const requested = server.auth;
 
   if (requested === 'basic') {
     if (!server.password_env) {

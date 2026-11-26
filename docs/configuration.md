@@ -14,7 +14,7 @@ If the file does not exist, the bridge starts with no servers and logs a warning
 | `url`          | yes      | Base URL of the OpenCode server.                                                                      |
 | `password_env` | no       | Environment variable holding the Basic auth password.                                                 |
 | `token_env`    | no       | Environment variable holding the Bearer token.                                                        |
-| `auth`         | no       | Explicit mode: `basic`, `bearer`, or `none`. Making this required is tracked in #35.                  |
+| `auth`         | yes      | Explicit mode: `basic`, `bearer`, or `none`.                                                          |
 | `timeout_ms`   | no       | Per-request timeout; defaults to `15000`.                                                             |
 | `allowlist`    | no       | Session ids allowed for writes; `*` allows all sessions and create. `create` allows session creation. |
 
@@ -40,9 +40,9 @@ servers:
 
 ## Authentication
 
-If `auth` is omitted, the mode is inferred: `password_env` selects `basic`, `token_env` selects `bearer`, otherwise `none`. If both `password_env` and `token_env` are set, `basic` wins. Basic auth uses the fixed username `opencode`; the config schema does not expose a username field.
+`auth` is required on every server entry. `basic` requires `password_env`; `bearer` requires `token_env`; `none` ignores both. Basic auth uses the fixed username `opencode`; the config schema does not expose a username field.
 
-Secrets are read from the environment at startup. A missing referenced variable aborts startup for all servers. Explicit `auth` is recommended; making the field required is tracked in #35.
+Secrets are read from the environment at startup. A missing referenced variable aborts startup for all servers. A server entry without `auth` is rejected.
 
 ## Environment variables
 

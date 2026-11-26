@@ -20,9 +20,11 @@ servers:
   - id: local
     url: http://127.0.0.1:49374
     password_env: OPENCODE_LOCAL_PASSWORD
+    auth: basic
   - id: remote
     url: http://127.0.0.2:49374
     password_env: OPENCODE_REMOTE_PASSWORD
+    auth: basic
 ```
 
 ## Language/runtime
