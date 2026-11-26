@@ -24,7 +24,7 @@ describe('evaluatePermission', () => {
       }),
     ).toEqual({
       allowed: false,
-      decision: 'denied: writes disabled',
+      decision: 'writes disabled',
     });
   });
 
@@ -37,7 +37,7 @@ describe('evaluatePermission', () => {
       }),
     ).toEqual({
       allowed: false,
-      decision: 'denied: session not allowlisted',
+      decision: 'session not allowlisted',
     });
   });
 });

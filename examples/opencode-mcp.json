@@ -1,0 +1,12 @@
+{
+  "mcp": {
+    "opencode-peer": {
+      "type": "local",
+      "command": ["node", "/path/to/opencode-peer-mcp/dist/index.js"],
+      "environment": {
+        "OPENCODE_PEER_MCP_CONFIG": "/path/to/opencode-peer-mcp/examples/servers.yaml",
+        "OPENCODE_PEER_MCP_WRITE_ENABLED": "false"
+      }
+    }
+  }
+}
