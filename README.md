@@ -97,7 +97,7 @@ See [docs/troubleshooting.md](./docs/troubleshooting.md) for common failures and
 - [Testing](./docs/testing.md)
 - [Evals](./docs/evals.md)
 - [Deployment](./docs/deployment.md)
-- [Releasing](./docs/releasing.md)
+- [Release](./doc/release.md)
 - [Versioning](./docs/versioning.md)
 - [Troubleshooting](./docs/troubleshooting.md)
 - [Examples](./examples/)

@@ -11,10 +11,10 @@ export interface PermissionResult {
 
 export function evaluatePermission(input: PermissionInput): PermissionResult {
   if (!input.globalEnabled) {
-    return { allowed: false, decision: 'denied: writes disabled' };
+    return { allowed: false, decision: 'writes disabled' };
   }
   if (input.allowlisted || input.explicitAllow) {
     return { allowed: true, decision: 'allowed' };
   }
-  return { allowed: false, decision: 'denied: session not allowlisted' };
+  return { allowed: false, decision: 'session not allowlisted' };
 }

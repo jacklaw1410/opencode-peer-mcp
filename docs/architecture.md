@@ -51,7 +51,7 @@ Example:
   "server": "local",
   "session": "ses_123",
   "tool": "session_prompt",
-  "allowlistDecision": "denied: writes disabled",
+  "allowlistDecision": "writes disabled",
   "result": "denied"
 }
 ```

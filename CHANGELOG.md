@@ -21,5 +21,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Development toolchain moved to Bun built-ins.
 
-[Unreleased]: https://github.com/jacklaw1410/opencode-peer-mcp/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/jacklaw1410/opencode-peer-mcp/releases/tag/v0.1.0
+[Unreleased]: https://github.com/jacklaw1410/opencode-peer-mcp/compare/main...HEAD

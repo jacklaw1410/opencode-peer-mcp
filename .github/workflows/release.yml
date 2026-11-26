@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.6-canary.1+7bb427f3b
+          bun-version: canary
       - run: bun --revision
       - name: Validate tag and version
         run: |

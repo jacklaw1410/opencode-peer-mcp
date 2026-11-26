@@ -1,4 +1,4 @@
-# Releasing
+# Release
 
 Releases are tag-driven. A pushed `v*` tag runs the release workflow, which validates the tag, runs the full check suite, builds the project, and creates a GitHub Release from the curated changelog section.
 

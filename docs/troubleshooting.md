@@ -20,7 +20,7 @@ Fix: set the referenced variable in the process that launches the MCP server. On
 
 ## Write denied
 
-Symptom: `Write denied: denied: writes disabled` or `Write denied: denied: session not allowlisted`.
+Symptom: `Write denied: writes disabled` or `Write denied: session not allowlisted`.
 
 Fix: set `OPENCODE_PEER_MCP_WRITE_ENABLED=true` (exact lowercase string), then add the session id or `*` to the server allowlist. `session_create` needs the `create` token or `*`. You can also pass `allowed: true` on the tool call, but that bypasses the allowlist; withhold it from untrusted clients. Denials are recorded in the audit log.
 
