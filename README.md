@@ -83,6 +83,14 @@ Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`)
 }
 ```
 
+## Documentation
+
+- [Architecture](./docs/architecture.md)
+- [Configuration](./docs/configuration.md)
+- [MCP tools](./docs/tools.md)
+- [Testing](./docs/testing.md)
+- [Deployment](./docs/deployment.md)
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
