@@ -40,7 +40,7 @@ servers:
 
 ## Authentication
 
-`auth` is required on every server entry. `basic` requires `password_env`; `bearer` requires `token_env`; `none` ignores both. Basic auth uses the fixed username `opencode`; the config schema does not expose a username field.
+`auth` is required on every server entry. `basic` requires `password_env`; `bearer` requires `token_env`; `none` ignores both. `none` is typically used when adding the local OpenCode server as a target, since a local server needs no credentials. Basic auth uses the fixed username `opencode`; the config schema does not expose a username field.
 
 Secrets are read from the environment at startup. A missing referenced variable aborts startup for all servers. A server entry without `auth` is rejected.
 
