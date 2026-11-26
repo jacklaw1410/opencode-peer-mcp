@@ -327,6 +327,56 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       accuracyThreshold: 0.8,
     },
     {
+      id: 'session_schedule',
+      description: 'Schedule a prompt after a delay.',
+      mode: 'mcp_host',
+      scenario: `In 30 seconds, send the prompt 'scheduled eval check' to session ${alpha} on server 'alpha'.`,
+      mcpHostConfig: hostConfig,
+      iterations: WRITE_CASE_ITERATIONS,
+      expect: {
+        toolsTriggered: {
+          calls: [
+            {
+              name: 'session_schedule',
+              arguments: {
+                server: 'alpha',
+                session_id: alpha,
+                prompt: 'scheduled eval check',
+                delay: '30s',
+              },
+            },
+          ],
+        },
+        toolCallCount: { min: 1, max: 5 },
+      },
+      accuracyThreshold: 0.8,
+    },
+    {
+      id: 'session_prompt_wait_for',
+      description: 'Await a prompt reply.',
+      mode: 'mcp_host',
+      scenario: `Send the prompt 'awaited eval check' to session ${alpha} on server 'alpha' and wait up to 10000 milliseconds for the reply.`,
+      mcpHostConfig: hostConfig,
+      iterations: WRITE_CASE_ITERATIONS,
+      expect: {
+        toolsTriggered: {
+          calls: [
+            {
+              name: 'session_prompt',
+              arguments: {
+                server: 'alpha',
+                session_id: alpha,
+                prompt: 'awaited eval check',
+                wait_for: 10000,
+              },
+            },
+          ],
+        },
+        toolCallCount: { min: 1, max: 5 },
+      },
+      accuracyThreshold: 0.8,
+    },
+    {
       id: 'no_tool_arithmetic',
       description: 'Answer without calling a tool.',
       mode: 'mcp_host',
