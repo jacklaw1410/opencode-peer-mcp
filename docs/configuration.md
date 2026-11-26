@@ -24,19 +24,25 @@ Example:
 servers:
   - id: local
     url: http://127.0.0.1:49374
-    password_env: OPENCODE_LOCAL_PASSWORD
+    auth: none
     timeout_ms: 10000
     allowlist:
       - '*'
-  - id: remote
+  - id: remote_1
     url: http://127.0.0.2:49374
     token_env: OPENCODE_REMOTE_TOKEN
     auth: bearer
+  - id: remote_2
+    url: http://127.0.0.3:49374
+    password_env: OPENCODE_LOCAL_PASSWORD
+    auth: basic
 ```
 
 ## Authentication
 
 If `auth` is omitted, the mode is inferred: `password_env` selects `basic`, `token_env` selects `bearer`, otherwise `none`. Basic auth uses a fixed username of `opencode`. Secrets are read from the environment at startup; missing variables are fatal for that server.
+
+Explicit `auth` is recommended. Making the field required is tracked in #35.
 
 ## Environment variables
 
