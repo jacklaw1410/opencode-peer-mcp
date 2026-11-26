@@ -7,16 +7,16 @@
 
 ## Commands
 
-| Command                    | Purpose                                                            |
-| -------------------------- | ------------------------------------------------------------------ |
-| `bun install`              | Install dependencies and configure Git hooks.                      |
-| `bun run build`            | Type-check and emit `dist/`.                                       |
-| `bun run test`             | Unit tests.                                                        |
-| `bun run typecheck`        | Type-check source and tests.                                       |
-| `bun run lint`             | Lint with Bun.                                                     |
-| `bun run format:check`     | Check formatting.                                                  |
-| `bun run format`           | Format files.                                                      |
-| `bun run test:integration` | Build, start two fixture OpenCode servers, run integration specs.  |
+| Command                    | Purpose                                                           |
+| -------------------------- | ----------------------------------------------------------------- |
+| `bun install`              | Install dependencies and configure Git hooks.                     |
+| `bun run build`            | Type-check and emit `dist/`.                                      |
+| `bun run test`             | Unit tests.                                                       |
+| `bun run typecheck`        | Type-check source and tests.                                      |
+| `bun run lint`             | Lint with Bun.                                                    |
+| `bun run format:check`     | Check formatting.                                                 |
+| `bun run format`           | Format files.                                                     |
+| `bun run test:integration` | Build, start two fixture OpenCode servers, run integration specs. |
 
 ## Unit tests
 
