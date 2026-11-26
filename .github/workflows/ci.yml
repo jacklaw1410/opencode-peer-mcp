@@ -8,6 +8,7 @@ on:
 
 jobs:
   check:
+    if: ${{ !contains(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -17,7 +18,7 @@ jobs:
       - run: bun --revision
       - name: Install OpenCode
         run: |
-          curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.3.2
+          curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.4.2
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
       - run: bun run typecheck

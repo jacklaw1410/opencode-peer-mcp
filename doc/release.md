@@ -1,32 +1,35 @@
 # Release
 
-Releases are tag-driven. A pushed `v*` tag runs the release workflow, which validates the tag, runs the full check suite, builds the project, and creates a GitHub Release from the curated changelog section.
+Releases are automated with [semantic-release](https://semantic-release.gitbook.io/semantic-release/) on every push to `main`. Conventional Commits determine the next version, generate release notes and `CHANGELOG.md`, publish the package to npm, and create a GitHub Release.
 
-## Release steps
+## Process
 
-1. Confirm all intended changes are merged to `main`.
-2. Update `CHANGELOG.md`: move items from `Unreleased` into a new version section with the release date (ISO 8601).
-3. Bump `version` in `package.json` to the release version.
-4. Open a PR with the changelog and version changes, then merge it.
-5. After the merge, push an annotated tag:
+1. Changes land on `main` through PRs using Conventional Commits.
+2. The release workflow runs a `verify` job: checkout, Bun canary, OpenCode 2.4.2, install, typecheck, lint, format check, unit tests, build via integration tests, and artifact upload.
+3. The `release` job checks out with write access, installs dependencies, downloads `dist/`, and runs `npx semantic-release`.
+4. semantic-release:
+   - analyses commits since the last release;
+   - determines the next `MAJOR`/`MINOR`/`PATCH` version;
+   - updates `CHANGELOG.md` and `package.json`;
+   - publishes `dist/` to npm;
+   - creates the GitHub Release with generated notes;
+   - commits the version bump and changelog with `[skip ci]`.
 
-   ```bash
-   git tag -a v0.2.0 -m "v0.2.0"
-   git push origin v0.2.0
-   ```
+Commit messages drive versioning: `fix:` → `PATCH`, `feat:` → `MINOR`, `BREAKING CHANGE:` or `!` → `MAJOR`. Docs/test/chore commits do not trigger a release.
 
-6. The workflow verifies the tag format, package version match, annotated tag, and that the tagged commit is reachable from `main`. It then runs `typecheck`, `lint`, `format:check`, unit tests, build (via integration tests), and integration tests.
-7. The release job uploads `dist/` assets and uses the matching `CHANGELOG.md` section as the release body.
+## Configuration
 
-## Tag rules
+- `.releaserc.json`: branch `main` and plugin chain (`commit-analyzer`, `release-notes-generator`, `changelog`, `npm`, `git`, `github`).
+- `package.json`: `files: ["dist"]`, `license`, `repository`, and `publishConfig.access: public`.
+- `.github/workflows/release.yml`: verify and release jobs described above.
 
-- Tag names must be `vMAJOR.MINOR.PATCH` with an optional pre-release suffix such as `v0.2.0-alpha.1`.
-- The tag suffix must match `package.json` exactly.
-- Tags must be annotated and point at a commit on `main`.
-- Do not retag or modify a published version. Fix issues in a new version.
+## Repository secrets
 
-## What is not automated
+Set these in GitHub repository settings:
 
-- npm publishing is not configured.
-- The changelog is not generated; it is curated before tagging.
-- Announcements are manual.
+| Secret         | Purpose                                                                                                     |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| `NPM_TOKEN`    | npm automation token with publish rights to `opencode-peer-mcp`. Used as `NPM_TOKEN` and `NODE_AUTH_TOKEN`. |
+| `GITHUB_TOKEN` | Provided automatically; used to push the release commit and create the GitHub Release.                      |
+
+No manual tagging is required. Do not hand-edit `CHANGELOG.md` version sections or `package.json` version for a release; semantic-release owns both.
