@@ -15,6 +15,7 @@ export async function connectClient(): Promise<Client> {
       OPENCODE_PEER_MCP_CONFIG: `${ROOT}/servers.yaml`,
       OPENCODE_ALPHA_PASSWORD: SERVERS.alpha.password,
       OPENCODE_BETA_PASSWORD: SERVERS.beta.password,
+      OPENCODE_WRITE_PASSWORD: SERVERS.write.password,
       OPENCODE_PEER_MCP_WRITE_ENABLED: 'true',
       OPENCODE_PEER_MCP_AUDIT_LOG: `${ROOT}/audit.log`,
     },

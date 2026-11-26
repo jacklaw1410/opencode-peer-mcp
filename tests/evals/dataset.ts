@@ -86,6 +86,10 @@ function judge(rubric: 'correctness' | 'completeness') {
 export function buildEvalDataset(state: FixtureState): EvalDataset {
   const alpha = state.alphaSessionId;
   const beta = state.betaSessionId;
+  const writeSession = state.writeSessionId;
+  // Write cases run against a dedicated server/session so read cases never
+  // observe the state they mutate.
+  const writeServer = 'write';
   const workDir = `${EVAL_LAYOUT.root}/work`;
 
   const standalone: EvalCase[] = [
@@ -258,7 +262,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       id: 'session_create',
       description: 'Create a session where allowed.',
       mode: 'mcp_host',
-      scenario: `Create a new session on server 'alpha' in directory ${workDir} with title 'eval-created-session'.`,
+      scenario: `Create a new session on server '${writeServer}' in directory ${workDir} with title 'eval-created-session'.`,
       mcpHostConfig: hostConfig,
       iterations: WRITE_CASE_ITERATIONS,
       expect: {
@@ -267,7 +271,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
             {
               name: 'session_create',
               arguments: {
-                server: 'alpha',
+                server: writeServer,
                 directory: workDir,
                 title: 'eval-created-session',
               },
@@ -282,7 +286,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       id: 'session_prompt',
       description: 'Prompt a session.',
       mode: 'mcp_host',
-      scenario: `Send the prompt 'hello from eval' to session ${alpha} on server 'alpha'.`,
+      scenario: `Send the prompt 'hello from eval' to session ${writeSession} on server '${writeServer}'.`,
       mcpHostConfig: hostConfig,
       iterations: WRITE_CASE_ITERATIONS,
       expect: {
@@ -291,8 +295,8 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
             {
               name: 'session_prompt',
               arguments: {
-                server: 'alpha',
-                session_id: alpha,
+                server: writeServer,
+                session_id: writeSession,
                 prompt: 'hello from eval',
               },
             },
@@ -306,7 +310,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       id: 'session_interrupt',
       description: 'Interrupt a session.',
       mode: 'mcp_host',
-      scenario: `Interrupt session ${alpha} on server 'alpha'.`,
+      scenario: `Interrupt session ${writeSession} on server '${writeServer}'.`,
       mcpHostConfig: hostConfig,
       iterations: WRITE_CASE_ITERATIONS,
       expect: {
@@ -314,7 +318,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
           calls: [
             {
               name: 'session_interrupt',
-              arguments: { server: 'alpha', session_id: alpha },
+              arguments: { server: writeServer, session_id: writeSession },
             },
           ],
         },
@@ -428,7 +432,7 @@ export function buildEvalDataset(state: FixtureState): EvalDataset {
       id: 'prompt_and_diff',
       description: 'Prompt an allowlisted session, then inspect its diff.',
       mode: 'mcp_host',
-      scenario: `Send the prompt 'eval workflow check' to session ${alpha} on 'alpha', then show its diff.`,
+      scenario: `Send the prompt 'eval workflow check' to session ${writeSession} on '${writeServer}', then show its diff.`,
       mcpHostConfig: hostConfig,
       iterations: WRITE_CASE_ITERATIONS,
       expect: {

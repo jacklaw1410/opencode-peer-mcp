@@ -28,7 +28,11 @@ const OUTAGE_PATTERN =
 
 // Case ids do not depend on fixture state, so a placeholder lists them
 // without reading state.json, which exists only after global setup runs.
-const placeholder = { alphaSessionId: 'list', betaSessionId: 'list' };
+const placeholder = {
+  alphaSessionId: 'list',
+  betaSessionId: 'list',
+  writeSessionId: 'list',
+};
 const resultsDir = path.resolve(import.meta.dirname, '../../.mcp-test-results');
 const baselineDir = path.join(resultsDir, 'baseline');
 const candidateDir = path.join(resultsDir, 'candidate');

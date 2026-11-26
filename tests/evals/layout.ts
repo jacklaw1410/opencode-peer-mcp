@@ -5,5 +5,6 @@ export const EVAL_LAYOUT: FixtureLayout = {
     process.env.OPENCODE_PEER_MCP_EVAL_ROOT ?? '/tmp/opencode-peer-mcp-evals',
   alphaPort: 49431,
   betaPort: 49432,
+  writePort: 49434,
   modelPort: 49433,
 };

@@ -42,6 +42,8 @@ export default defineConfig({
               process.env.OPENCODE_ALPHA_PASSWORD ?? 'alpha-pass',
             OPENCODE_BETA_PASSWORD:
               process.env.OPENCODE_BETA_PASSWORD ?? 'beta-pass',
+            OPENCODE_WRITE_PASSWORD:
+              process.env.OPENCODE_WRITE_PASSWORD ?? 'write-pass',
             OPENCODE_PEER_MCP_WRITE_ENABLED: 'true',
             OPENCODE_PEER_MCP_AUDIT_LOG: `${EVAL_LAYOUT.root}/audit.log`,
           },
