@@ -13,39 +13,80 @@ Use the Bun canary build. `bun lint` exists only in canary builds: `bun upgrade 
 
 The pre-commit hook runs `bun fmt --staged`, `bun lint --staged --fix`, and `bun check`. Run the commit with the canary `bun` first on `PATH`.
 
-## Evals
+## Installation
 
-Evals check whether an LLM picks and uses the MCP tools correctly. They call a paid model, so they run locally only and are not part of `bun run test` or CI.
-
-The default provider `openai` routes through a local proxy to OpenCode Go. Set `OPENCODE_GO_API_KEY` to your Go key. DeepSeek V4.1 Flash needs Console Settings > Privacy set to Global. If a run fails with a region or privacy error, change that setting.
-
-```
-OPENCODE_GO_API_KEY=... bun run test:evals
-OPENCODE_GO_API_KEY=... bun run test:evals -- --grep servers_list
+```bash
+bun install
+bun run build
 ```
 
-Each case runs as its own Playwright test. Results go to `.mcp-test-results/`, and the MST report is written to `.mcp-test-results/latest/`.
+## Configuration
 
-Baselines:
+Servers are supplied in a YAML config file. Secrets are referenced by environment variable name, never stored directly.
 
-- `MCP_EVAL_UPDATE_BASELINE=1` writes a case's results to `.mcp-test-results/baseline/` only when every trial passes with no infrastructure error. Otherwise the results stay in `.mcp-test-results/candidate/`, and the log says why.
-- `MCP_EVAL_COMPARE_BASELINE=1` fails a case whose pass rate drops more than 0.1 below its baseline, for example 10/10 to 8/10. A case with no baseline file also fails.
-- Set only one of the two variables. Setting both fails each case.
+Suggested default path: `~/.config/opencode-peer-mcp/servers.yaml`.
 
-Environment variables:
+```yaml
+servers:
+  - id: local
+    url: http://127.0.0.1:49374
+    password_env: OPENCODE_LOCAL_PASSWORD
+  - id: remote
+    url: http://127.0.0.2:49374
+    password_env: OPENCODE_REMOTE_PASSWORD
+```
 
-| Variable                                            | Default                                       | Purpose                                                                                    |
-| --------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `OPENCODE_GO_API_KEY`                               | none                                          | OpenCode Go key, required when routing through the proxy                                   |
-| `MCP_EVAL_PROVIDER`                                 | `openai`                                      | Host model provider. `openai` routes through the Go proxy unless `OPENAI_BASE_URL` is set  |
-| `MCP_EVAL_MODEL`                                    | `deepseek-v4.1-flash` for `openai`, else none | Host model. Required when `MCP_EVAL_PROVIDER` is `deepseek`, `anthropic`, or `google`      |
-| `MCP_EVAL_ITERATIONS`                               | 10                                            | Number of trials per read case. Write cases always use 1.                                  |
-| `MCP_EVAL_JUDGE_PROVIDER`                           | host provider if judge-capable, else `openai` | `openai`, `anthropic`, or `google`                                                         |
-| `MCP_EVAL_JUDGE_MODEL`                              | host model if providers match, else none      | Judge model. Required when the judge provider differs from the host provider               |
-| `MCP_EVAL_JUDGE_REPS`                               | 1                                             | Number of judge calls averaged per trial. 3 reduces variance.                              |
-| `MCP_EVAL_JUDGE_API_KEY_ENV`                        | provider key name                             | Env var that holds the judge key. Ignored for `openai`, which always uses `OPENAI_API_KEY` |
-| `OPENAI_BASE_URL`                                   | unset                                         | Skips the Go proxy and sends OpenAI requests to this endpoint                              |
-| `OPENCODE_PEER_MCP_EVAL_ROOT`                       | `/tmp/opencode-peer-mcp-evals`                | Eval fixture directory                                                                     |
-| `OPENCODE_ALPHA_PASSWORD`, `OPENCODE_BETA_PASSWORD` | `alpha-pass`, `beta-pass`                     | Passwords for the two fixture OpenCode servers                                             |
+Set `OPENCODE_PEER_MCP_CONFIG` to the config file path and `OPENCODE_PEER_MCP_WRITE_ENABLED=true` to enable gated writes.
 
-If the host is not `openai` and the judge is `openai`, the judge calls `api.openai.com` with `OPENAI_API_KEY`, not the Go proxy.
+## Usage
+
+Run the built server:
+
+```bash
+node dist/index.js
+```
+
+Or configure it as an MCP server in your MCP client using the deployment snippet below.
+
+## MCP tools
+
+`servers_list`, `sessions_list`, `session_get`, `session_status`, `session_messages`, `session_diff`, `sessions_search`, `sessions_compare`, `session_create`, `session_prompt`, `session_interrupt`, `session_schedule`.
+
+## Write access
+
+Write operations are disabled by default. To enable them:
+
+1. Set `OPENCODE_PEER_MCP_WRITE_ENABLED=true`.
+2. Allowlist target sessions in the config or via tool arguments.
+
+Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`).
+
+## Troubleshooting
+
+- Integration tests require `opencode` on `PATH`.
+- If tools fail to connect, verify server URLs and environment variables in the config.
+- Audit logs are written to `~/.opencode-peer-mcp/audit.log`.
+
+## Deployment
+
+```json
+{
+  "mcp": {
+    "opencode-peer": {
+      "type": "local",
+      "command": ["node", "/path/to/opencode-peer-mcp/dist/index.js"],
+      "environment": {
+        "OPENCODE_PEER_MCP_CONFIG": "/home/jack/.config/opencode-peer-mcp/servers.yaml"
+      }
+    }
+  }
+}
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
