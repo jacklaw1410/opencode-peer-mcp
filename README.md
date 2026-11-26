@@ -31,9 +31,11 @@ servers:
   - id: local
     url: http://127.0.0.1:49374
     password_env: OPENCODE_LOCAL_PASSWORD
+    auth: basic
   - id: remote
     url: http://127.0.0.2:49374
     password_env: OPENCODE_REMOTE_PASSWORD
+    auth: basic
 ```
 
 Set `OPENCODE_PEER_MCP_CONFIG` to the config file path and `OPENCODE_PEER_MCP_WRITE_ENABLED=true` to enable gated writes.

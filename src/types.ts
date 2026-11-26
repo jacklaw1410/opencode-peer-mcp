@@ -6,7 +6,7 @@ export interface ServerConfig {
   username?: string;
   password_env?: string;
   token_env?: string;
-  auth?: AuthMode;
+  auth: AuthMode;
   timeout_ms?: number;
   allowlist?: string[];
 }

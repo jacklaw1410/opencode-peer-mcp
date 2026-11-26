@@ -294,12 +294,14 @@ export async function startFixtures(
       '  - id: alpha',
       `    url: http://127.0.0.1:${servers[0].port}`,
       '    password_env: OPENCODE_ALPHA_PASSWORD',
+      '    auth: basic',
       '    allowlist:',
       `      - '${alphaId}'`,
       "      - 'create'",
       '  - id: beta',
       `    url: http://127.0.0.1:${servers[1].port}`,
       '    password_env: OPENCODE_BETA_PASSWORD',
+      '    auth: basic',
       '',
     ].join('\n');
     await writeFile(`${layout.root}/servers.yaml`, yaml, 'utf8');

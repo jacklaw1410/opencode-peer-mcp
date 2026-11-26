@@ -26,7 +26,7 @@ describe('loadConfig', () => {
     process.env.TEST_PASSWORD = 'secret';
     await writeFile(
       file,
-      'servers:\n  - id: local\n    url: http://127.0.0.1:49374\n    password_env: TEST_PASSWORD\n',
+      'servers:\n  - id: local\n    url: http://127.0.0.1:49374\n    password_env: TEST_PASSWORD\n    auth: basic\n',
     );
     const servers = await loadConfig(file);
     expect(servers).toHaveLength(1);
@@ -39,13 +39,24 @@ describe('loadConfig', () => {
     delete process.env.TEST_PASSWORD;
   });
 
+  it('rejects a server entry without auth', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'opm-'));
+    dirs.push(dir);
+    const file = join(dir, 'servers.yaml');
+    await writeFile(
+      file,
+      'servers:\n  - id: local\n    url: http://127.0.0.1:49374\n    password_env: TEST_PASSWORD\n',
+    );
+    await expect(loadConfig(file)).rejects.toThrow(/auth/);
+  });
+
   it('rejects duplicate server ids', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'opm-'));
     dirs.push(dir);
     const file = join(dir, 'servers.yaml');
     await writeFile(
       file,
-      'servers:\n  - id: local\n    url: http://127.0.0.1:49374\n  - id: local\n    url: http://127.0.0.1:49375\n',
+      'servers:\n  - id: local\n    url: http://127.0.0.1:49374\n    auth: none\n  - id: local\n    url: http://127.0.0.1:49375\n    auth: none\n',
     );
     await expect(loadConfig(file)).rejects.toThrow(/Duplicate server id/);
   });
