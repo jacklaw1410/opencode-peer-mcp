@@ -24,7 +24,7 @@ bun run build
 
 Servers are supplied in a YAML config file. Secrets are referenced by environment variable name, never stored directly.
 
-Suggested default path: `~/.config/opencode-peer-mcp/servers.yaml`.
+Default path: `~/.config/opencode-peer-mcp/servers.yaml`.
 
 ```yaml
 servers:
@@ -50,7 +50,7 @@ Or configure it as an MCP server in your MCP client using the deployment snippet
 
 ## MCP tools
 
-`servers_list`, `sessions_list`, `session_get`, `session_status`, `session_messages`, `session_diff`, `sessions_search`, `sessions_compare`, `session_create`, `session_prompt`, `session_interrupt`, `session_schedule`.
+`servers_list`, `server_get`, `sessions_list`, `session_get`, `session_status`, `session_messages`, `session_diff`, `sessions_search`, `sessions_compare`, `session_create`, `session_prompt`, `session_interrupt`, `session_schedule`.
 
 ## Write access
 
@@ -64,7 +64,7 @@ Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`)
 ## Troubleshooting
 
 - Integration tests require `opencode` on `PATH`.
-- If tools fail to connect, verify server URLs and environment variables in the config.
+- If tools fail to connect, verify server URLs and that referenced environment variables are set.
 - Audit logs are written to `~/.opencode-peer-mcp/audit.log`.
 
 ## Deployment
@@ -82,6 +82,15 @@ Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`)
   }
 }
 ```
+
+## Documentation
+
+- [Architecture](./docs/architecture.md)
+- [Configuration](./docs/configuration.md)
+- [MCP tools](./docs/tools.md)
+- [Testing](./docs/testing.md)
+- [Evals](./docs/evals.md)
+- [Deployment](./docs/deployment.md)
 
 ## Contributing
 
