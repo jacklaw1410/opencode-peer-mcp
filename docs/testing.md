@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Bun canary build (`bun upgrade --canary`).
-- `opencode` on `PATH` for integration and eval tests.
+- `opencode` on `PATH` for integration tests and evals.
 
 ## Commands
 
@@ -25,7 +25,9 @@ Cover config loading, auth resolution, HTTP retries and bounds, permission decis
 
 ## Integration tests
 
-`tests/integration` starts two OpenCode servers using fixture config and credentials, then exercises every MCP tool through a real client. They require `opencode` on `PATH`.
+`tests/integration` starts two OpenCode servers and one fixture model server, then exercises every MCP tool through a real client. They require `opencode` on `PATH`.
+
+Fixtures use ports `49421`, `49422`, and `49423`. The fixture root defaults to `/tmp/opencode-peer-mcp-integration`; override with `OPENCODE_PEER_MCP_INTEGRATION_ROOT`. The root must be under `/tmp` or `os.tmpdir()` and is deleted recursively before and after each run, so use a disposable path.
 
 ## Evals
 
@@ -33,4 +35,4 @@ Evals are scenario-based model evaluations, not ordinary unit or integration tes
 
 ## Pre-commit hook
 
-The hook runs `bun fmt --staged`, `bun lint --staged --fix`, and `bun check`. Run commits with the canary `bun` first on `PATH`.
+The hook runs `bun fmt --staged`, `bun lint --staged --fix`, `bun check`, and `bun check -p tsconfig.tests.json`. Run commits with the canary `bun` first on `PATH`.
