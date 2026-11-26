@@ -1,9 +1,22 @@
+# macOS
+.DS_Store
+
+# NodeJS
 node_modules/
+
+# Build/Test artifacts
 dist/
 test-results/
+
+# Editor
+.vscode/
+
+# Wrangler
+.wrangler/
 
 # Eval results; per-case baselines are committed
 .mcp-test-results/*
 !.mcp-test-results/baseline/
 
+# Per-session agent configs written by the opencode-kiro provider
 .kiro/agents/opencode-*.json
