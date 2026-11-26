@@ -1,0 +1,58 @@
+{
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "caseResults": [
+    {
+      "id": "session_prompt_wait_for",
+      "datasetName": "opencode-peer-mcp-evals",
+      "toolName": "mcp_host",
+      "source": "eval",
+      "pass": true,
+      "request": {
+        "description": "Await a prompt reply.",
+        "scenario": "Send the prompt 'awaited eval check' to session <session-id> on server 'alpha' and wait up to 10000 milliseconds for the reply.",
+        "mcpHostConfig": {
+          "provider": "openai",
+          "model": "hy4-flash-free"
+        }
+      },
+      "expectations": {
+        "toolsTriggered": {
+          "pass": true,
+          "details": "All tool call expectations met"
+        },
+        "toolCallCount": {
+          "pass": true,
+          "details": "Tool call count (1) is within expected range"
+        }
+      },
+      "authType": "none",
+      "project": "opencode-peer-mcp-evals",
+      "toolPrecision": 1,
+      "toolRecall": 1,
+      "mcpHostTrace": {
+        "calls": [
+          {
+            "name": "session_prompt",
+            "arguments": {
+              "server": "alpha",
+              "session_id": "<session-id>",
+              "prompt": "awaited eval check",
+              "wait_for": 10000,
+              "allowed": true
+            },
+            "status": "expected"
+          }
+        ],
+        "missed": []
+      }
+    }
+  ],
+  "metadata": {
+    "packageVersion": "1.1.1"
+  },
+  "datasetToolPrecision": 1,
+  "datasetToolRecall": 1,
+  "datasetToolF1": 1
+}
