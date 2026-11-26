@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: canary
+          bun-version: 1.4.6-canary.1+7bb427f3b
       - run: bun --revision
       - name: Install OpenCode
         run: |

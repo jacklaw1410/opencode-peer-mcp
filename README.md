@@ -11,7 +11,7 @@ Use the Bun canary build. `bun lint` exists only in canary builds: `bun upgrade 
 - `bun run test:integration`: starts two OpenCode servers. Requires `opencode` on `PATH`.
 - `bun run typecheck`, `bun run lint`, `bun run format:check`: static checks.
 
-The pre-commit hook runs `bun fmt --staged`, `bun lint --staged --fix`, and `bun check`. Run the commit with the canary `bun` first on `PATH`.
+The pre-commit hook runs `bun fmt --staged`, `bun lint --staged --fix`, `bun check`, and `bun check -p tsconfig.tests.json`. Run the commit with the canary `bun` first on `PATH`.
 
 ## Installation
 
@@ -30,10 +30,12 @@ Default path: `~/.config/opencode-peer-mcp/servers.yaml`.
 servers:
   - id: local
     url: http://127.0.0.1:49374
+    auth: basic
     password_env: OPENCODE_LOCAL_PASSWORD
     auth: basic
   - id: remote
     url: http://127.0.0.2:49374
+    auth: basic
     password_env: OPENCODE_REMOTE_PASSWORD
     auth: basic
 ```
@@ -65,6 +67,8 @@ Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`)
 
 ## Troubleshooting
 
+See [docs/troubleshooting.md](./docs/troubleshooting.md) for common failures and fixes.
+
 - Integration tests require `opencode` on `PATH`.
 - If tools fail to connect, verify server URLs and that referenced environment variables are set.
 - Audit logs are written to `~/.opencode-peer-mcp/audit.log`.
@@ -93,6 +97,10 @@ Denied attempts are recorded in the audit log (`~/.opencode-peer-mcp/audit.log`)
 - [Testing](./docs/testing.md)
 - [Evals](./docs/evals.md)
 - [Deployment](./docs/deployment.md)
+- [Releasing](./docs/releasing.md)
+- [Versioning](./docs/versioning.md)
+- [Troubleshooting](./docs/troubleshooting.md)
+- [Examples](./examples/)
 
 ## Contributing
 

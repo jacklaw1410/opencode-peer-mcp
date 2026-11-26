@@ -1,0 +1,13 @@
+servers:
+  - id: local
+    url: http://127.0.0.1:49374
+    auth: none
+    timeout_ms: 10000
+    allowlist:
+      - ses_local_example
+  - id: remote
+    url: http://127.0.0.2:49374
+    token_env: OPENCODE_REMOTE_TOKEN
+    auth: bearer
+    allowlist:
+      - ses_remote_example
