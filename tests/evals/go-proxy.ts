@@ -69,6 +69,52 @@ const DROP_RESPONSE_HEADERS = new Set([
   'content-encoding',
 ]);
 
+function isObject(value: unknown): value is JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+// Each eval trial and each judge call opens a fresh conversation. The AI SDK
+// replays earlier turns as assistant/tool messages (chat) or item_reference
+// entries (responses), so those requests continue the current Go session.
+export function opensNewConversation(
+  path: string,
+  body: Uint8Array | undefined,
+): boolean {
+  if (!body) return false;
+  let payload: unknown;
+  try {
+    payload = JSON.parse(Buffer.from(body).toString('utf8'));
+  } catch {
+    return false;
+  }
+  if (!isObject(payload)) return false;
+
+  if (path === '/v1/chat/completions') {
+    const messages = Array.isArray(payload.messages) ? payload.messages : [];
+    return !messages.some(
+      (message) =>
+        isObject(message) &&
+        (message.role === 'assistant' || message.role === 'tool'),
+    );
+  }
+  if (path === '/v1/responses') {
+    const input = Array.isArray(payload.input)
+      ? payload.input
+      : typeof payload.input === 'string'
+        ? [payload.input]
+        : [];
+    return !input.some(
+      (item) =>
+        isObject(item) &&
+        (item.type === 'item_reference' ||
+          item.type === 'function_call' ||
+          item.type === 'reasoning' ||
+          item.role === 'assistant'),
+    );
+  }
+  return false;
+}
+
 function copyHeaders(source: IncomingHttpHeaders, drop: Set<string>): Headers {
   const headers = new Headers();
   for (const [name, value] of Object.entries(source)) {
@@ -123,6 +169,7 @@ function logExchange(
   entry: {
     path: string;
     status: number;
+    session: string;
     request?: Uint8Array;
     response: Uint8Array;
   },
@@ -132,6 +179,7 @@ function logExchange(
     time: new Date().toISOString(),
     path: entry.path,
     status: entry.status,
+    session: entry.session,
     request: entry.request
       ? Buffer.from(entry.request).toString('utf8').slice(0, 20000)
       : undefined,
@@ -144,9 +192,9 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
   const upstream = options.upstream ?? DEFAULT_UPSTREAM;
   const upstreamTimeoutMs =
     options.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS;
-  const sessionId = `ses_${randomUUID()}`;
+  let sessionId = `ses_${randomUUID()}`;
   const expectedAuth = `Bearer ${options.clientToken}`;
-  const items: ItemStore = new Map();
+  let items: ItemStore = new Map();
 
   async function forward(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
@@ -177,7 +225,6 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
     });
     const headers = copyHeaders(req.headers, DROP_REQUEST_HEADERS);
     headers.set('authorization', `Bearer ${options.apiKey}`);
-    headers.set('x-opencode-session', sessionId);
     headers.set('user-agent', USER_AGENT);
 
     const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
@@ -195,6 +242,14 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
         return;
       }
     }
+
+    if (opensNewConversation(url.pathname, body)) {
+      sessionId = `ses_${randomUUID()}`;
+      // Responses item references are conversation-local. Drop them with the
+      // session so a later case cannot resolve an earlier case's tool output.
+      items = new Map();
+    }
+    headers.set('x-opencode-session', sessionId);
 
     const translate = url.pathname === '/v1/responses';
     let upstreamPath = url.pathname.slice('/v1'.length);
@@ -237,6 +292,7 @@ export async function startGoProxy(options: GoProxyOptions): Promise<GoProxy> {
       logExchange(options.logFile, {
         path: url.pathname,
         status: upstreamRes.status,
+        session: sessionId,
         request: body,
         response: payload,
       });

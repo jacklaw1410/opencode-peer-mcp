@@ -12,12 +12,14 @@ Evals are scenario-based model evaluations. They are different from unit and int
 ## Process
 
 1. Playwright global setup starts two fixture OpenCode servers on ports `49431` and `49432`, plus a fixture model server on `49433`.
-2. If the host provider is `openai` and `OPENAI_BASE_URL` is not set, a local Go proxy routes inference through `OPENCODE_GO_API_KEY`. Otherwise no model proxy is started.
+2. If the host provider is `openai` and `OPENAI_BASE_URL` is not set, a local Go proxy routes inference through `OPENCODE_GO_API_KEY`. Otherwise no model proxy is started. The proxy opens a fresh `x-opencode-session` for each new conversation, so each trial and judge call starts with empty Go conversation state. Tool steps within one trial share that session.
 3. Each eval case sends a natural-language scenario to the host model via the MCP server tester.
 4. A judge scores correctness and/or completeness against a 0.7 threshold.
 5. Results are written under `.mcp-test-results/`; candidates under `.mcp-test-results/candidate/`; baselines under `.mcp-test-results/baseline/`.
 
 Write cases mutate fixture state and run once. Read cases run `MCP_EVAL_ITERATIONS` times (default 10).
+
+The Go proxy opens a fresh `x-opencode-session` for each new conversation. Each eval trial and each judge call starts one; tool turns within a trial reuse it. No case can inherit another case's Go conversation state. Proxy logs record the session id for each exchange.
 
 ## Environment variables
 
